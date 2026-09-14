@@ -104,21 +104,20 @@ fun ExamScreen(
                 .background(LightColors.background)
         ) {
             // Hero countdown for nearest exam
-            val upcomingExam = state.exams.firstOrNull { exam ->
-                LocalDate.parse(exam.date).isAfter(LocalDate.now().minusDays(1))
-            }
+            val upcomingExam = state.upcoming.firstOrNull()
 
             if (upcomingExam != null) {
-                val examDate = LocalDate.parse(upcomingExam.date)
+                val examDate = LocalDate.parse(upcomingExam.first.examDate)
                 val daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), examDate).toInt()
 
                 if (daysRemaining >= 0 && daysRemaining <= 30) {
+                    val startTime = String.format("%02d:%02d", upcomingExam.first.startMinutes / 60, upcomingExam.first.startMinutes % 60)
                     ExamCountdownHero(
                         daysRemaining = daysRemaining,
-                        examName = upcomingExam.subjectName,
-                        examCode = upcomingExam.subjectCode,
-                        examTime = upcomingExam.time ?: "Chưa rõ",
-                        examRoom = upcomingExam.room ?: "Chưa rõ",
+                        examName = upcomingExam.second.name,
+                        examCode = upcomingExam.second.code,
+                        examTime = startTime,
+                        examRoom = upcomingExam.first.room ?: "Chưa rõ",
                         modifier = Modifier.padding(Spacing.lg)
                     )
                 }
@@ -136,13 +135,9 @@ fun ExamScreen(
 
             // Exam list
             val filteredExams = when (selectedFilter) {
-                "Sắp thi" -> state.exams.filter { exam ->
-                    LocalDate.parse(exam.date).isAfter(LocalDate.now().minusDays(1))
-                }
-                "Đã qua" -> state.exams.filter { exam ->
-                    LocalDate.parse(exam.date).isBefore(LocalDate.now())
-                }
-                else -> state.exams
+                "Sắp thi" -> state.upcoming
+                "Đã qua" -> state.past
+                else -> state.upcoming + state.past
             }
 
             if (filteredExams.isEmpty()) {
@@ -157,11 +152,12 @@ fun ExamScreen(
                     contentPadding = PaddingValues(Spacing.lg),
                     verticalArrangement = Arrangement.spacedBy(Spacing.md)
                 ) {
-                    items(filteredExams, key = { it.id }) { exam ->
+                    items(filteredExams, key = { it.first.id }) { examPair ->
                         ExamCard(
-                            exam = exam,
+                            exam = examPair.first,
+                            subject = examPair.second,
                             onEdit = { /* TODO */ },
-                            onDelete = { viewModel.deleteExam(exam.id) }
+                            onDelete = { viewModel.deleteExam(examPair.first) }
                         )
                     }
                 }
@@ -176,11 +172,12 @@ fun ExamScreen(
 @Composable
 private fun ExamCard(
     exam: Exam,
+    subject: Subject,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val (bgColor, accentColor) = getSubjectColor(exam.subjectCode)
-    val examDate = LocalDate.parse(exam.date)
+    val (bgColor, accentColor) = getSubjectColor(subject.code)
+    val examDate = LocalDate.parse(exam.examDate)
     val isPast = examDate.isBefore(LocalDate.now())
 
     Card(
@@ -209,12 +206,12 @@ private fun ExamCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = getSubjectEmoji(exam.subjectCode),
+                            text = getSubjectEmoji(subject.code),
                             style = MaterialTheme.typography.titleLarge
                         )
                         Spacer(modifier = Modifier.width(Spacing.xs))
                         Text(
-                            text = exam.subjectName,
+                            text = subject.name,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = LightColors.textPrimary,
@@ -222,7 +219,7 @@ private fun ExamCard(
                         )
                     }
                     Text(
-                        text = exam.subjectCode,
+                        text = subject.code,
                         style = MaterialTheme.typography.labelMedium,
                         color = LightColors.textSecondary
                     )
@@ -264,8 +261,9 @@ private fun ExamCard(
                 Text("📅", style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.width(Spacing.xs))
                 val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                val startTime = String.format("%02d:%02d", exam.startMinutes / 60, exam.startMinutes % 60)
                 Text(
-                    text = "${examDate.format(formatter)} · ${exam.time ?: "Chưa rõ"}",
+                    text = "${examDate.format(formatter)} · $startTime · ${exam.durationMinutes}p",
                     style = MaterialTheme.typography.labelLarge,
                     color = LightColors.textPrimary,
                     fontWeight = FontWeight.Medium
@@ -274,7 +272,7 @@ private fun ExamCard(
 
             Spacer(modifier = Modifier.height(Spacing.xs))
 
-            // Room and student ID badges
+            // Room and candidate ID badges
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 modifier = Modifier.fillMaxWidth()
@@ -282,26 +280,24 @@ private fun ExamCard(
                 if (exam.room != null) {
                     InfoBadge(icon = "📍", text = exam.room)
                 }
-                if (exam.studentId != null) {
-                    InfoBadge(icon = "🪪", text = "SBD: ${exam.studentId}")
+                if (exam.candidateId != null) {
+                    InfoBadge(icon = "🪪", text = "SBD: ${exam.candidateId}")
                 }
             }
 
-            // Exam format
-            if (exam.format != null) {
-                Spacer(modifier = Modifier.height(Spacing.xs))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("📋", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.width(Spacing.xs))
-                    Text(
-                        text = exam.format,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = LightColors.textSecondary
-                    )
-                }
+            // Exam type
+            Spacer(modifier = Modifier.height(Spacing.xs))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("📋", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.width(Spacing.xs))
+                Text(
+                    text = exam.examType.name,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = LightColors.textSecondary
+                )
             }
         }
     }
