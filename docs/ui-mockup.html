@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuocSchedule — Mockup UI/UX</title>
+<style>
+:root{
+  color-scheme: light;
+  --primary:#7FB3D9; --primary-dark:#5B8FB0;
+  --secondary:#A8D8C8; --mint-dark:#6FA892;
+  --bg:#FAFAF7; --surface:#FFFFFF; --beige:#F2E8D5;
+  --exam:#F5B8B1; --exam-dark:#E8918A;
+  --ink:#2E3A45; --ink-soft:#6B7B88; --line:#EDEAE3;
+  --lav:#DCD3EE; --peach:#F7D9C4; --sky:#C7E0F2; --mint:#C9EBDD; --rose:#F6D3D0; --lemon:#F6EDC8;
+  --radius:18px;
+  --shadow:0 6px 24px rgba(46,58,69,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Be Vietnam Pro','Segoe UI',Roboto,sans-serif}
+body{background:#F0EFEA;color:var(--ink);min-height:100vh;padding:28px 20px}
+header{max-width:1180px;margin:0 auto 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font-size:22px;font-weight:700}
+h1 span{color:var(--primary-dark)}
+.sub{color:var(--ink-soft);font-size:13px;margin-top:4px}
+.toggle{display:flex;gap:8px;align-items:center;background:#fff;border-radius:999px;padding:6px 14px;box-shadow:var(--shadow);font-size:13px;cursor:pointer;user-select:none;border:none}
+.grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:28px}
+.phone{background:var(--bg);border-radius:36px;padding:18px 16px 20px;box-shadow:var(--shadow),inset 0 0 0 2px #fff}
+.phone.dark{--bg:#1C1E20;--surface:#26292C;--ink:#E8E6E1;--ink-soft:#9AA5AE;--line:#34383C;--beige:#4A4238;--shadow:0 6px 24px rgba(0,0,0,.4)}
+.phone.dark{background:var(--bg)}
+.phone-label{text-align:center;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px}
+.statusbar{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-soft);padding:0 8px 10px}
+.card{background:var(--surface);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(46,58,69,.05)}
+.phone.dark .card{box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.chip{display:inline-block;font-size:10px;font-weight:600;padding:3px 9px;border-radius:999px}
+.tabs{display:flex;gap:6px;background:var(--line);border-radius:999px;padding:4px;margin-bottom:12px}
+.tab{flex:1;text-align:center;font-size:12px;font-weight:600;padding:7px 0;border-radius:999px;color:var(--ink-soft)}
+.tab.active{background:var(--surface);color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.fab{position:absolute;bottom:66px;right:14px;width:48px;height:48px;border-radius:16px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:300;box-shadow:0 8px 20px rgba(127,179,217,.5)}
+.screen{position:relative;min-height:560px;padding-bottom:56px}
+.bottomnav{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:10px 0 4px;border-top:1px solid var(--line);font-size:10px;color:var(--ink-soft)}
+.bottomnav b{color:var(--primary-dark)}
+.phone.dark .bottomnav b{color:var(--primary)}
+/* timetable */
+.weekgrid{display:grid;grid-template-columns:34px repeat(5,1fr);gap:5px;font-size:9px}
+.weekgrid .dow{text-align:center;font-weight:700;color:var(--ink-soft);padding:4px 0}
+.slot{background:var(--surface);border-radius:10px;padding:6px 5px;min-height:52px;font-size:8.5px;line-height:1.35}
+.slot b{font-size:9.5px;display:block}
+.slot .room{color:var(--ink-soft);font-size:8px}
+.c-mint{background:var(--mint)} .c-sky{background:var(--sky)} .c-beige{background:var(--beige)}
+.c-rose{background:var(--rose)} .c-lav{background:var(--lav)} .c-lemon{background:var(--lemon)} .c-peach{background:var(--peach)}
+.time{color:var(--ink-soft);font-size:8px;padding-top:6px}
+/* exam */
+.countdown{background:linear-gradient(135deg,var(--exam),var(--exam-dark));border-radius:var(--radius);padding:16px;color:#fff;margin-bottom:12px}
+.countdown .num{font-size:34px;font-weight:800}
+.examcard{border-left:5px solid var(--exam-dark)}
+.examcard h4{font-size:13px;margin-bottom:6px}
+.examcard .meta{font-size:11px;color:var(--ink-soft);display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.examcard .sbd{font-weight:700;color:var(--exam-dark);font-size:11px}
+.past{opacity:.45}
+/* import */
+.opt{display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--radius);background:var(--surface);margin-bottom:10px;cursor:pointer;transition:transform .15s}
+.opt:hover{transform:translateY(-2px)}
+.opt .ic{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.opt b{font-size:13px;display:block}
+.opt small{color:var(--ink-soft);font-size:11px}
+/* preview */
+.fieldrow{display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.fieldrow span:first-child{color:var(--ink-soft)}
+.warn{color:#C77E2C;font-weight:600}
+.warnrow{background:#FCF3E3;border-radius:8px;padding:2px 6px}
+.phone.dark .warnrow{background:#4A3B24}
+.btn{display:block;text-align:center;background:var(--primary);color:#fff;border-radius:14px;padding:12px;font-size:13px;font-weight:700;margin-top:10px}
+.btn.ghost{background:transparent;color:var(--ink-soft);font-weight:500}
+/* loading */
+.shimmer{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--line) 25%,var(--surface) 50%,var(--line) 75%);background-size:200% 100%;animation:sh 1.4s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.steps{font-size:11px;color:var(--ink-soft);margin-top:14px}
+.steps div{padding:5px 0}
+.steps .done{color:var(--mint-dark)}
+/* palette doc */
+.palette{display:flex;gap:8px;flex-wrap:wrap}
+.swatch{width:56px;height:56px;border-radius:14px;display:flex;align-items:flex-end;justify-content:center;font-size:8px;padding:4px;color:#5a5a5a;font-weight:600}
+.note{max-width:1180px;margin:26px auto 0;font-size:12px;color:#7A8794;line-height:1.7}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>QuocSchedule <span>· UI/UX Mockup</span></h1>
+    <div class="sub">Concept "Học nhẹ nhàng" — Minimalism × Material Design 3 × Pastel. Dữ liệu trong mockup là mẫu minh họa.</div>
+  </div>
+  <button class="toggle" onclick="document.querySelectorAll('.phone').forEach(p=>p.classList.toggle('dark'))">🌙 / ☀️ &nbsp;Chuyển Light / Dark</button>
+</header>
+
+<div class="grid">
+
+  <!-- 1. TIMETABLE -->
+  <div class="phone">
+    <div class="phone-label">Màn 1 — Thời khóa biểu (Tuần)</div>
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="screen">
+      <div class="tabs"><div class="tab active">📅 Lịch học</div><div class="tab">📝 Lịch thi</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:11px;color:var(--ink-soft)">‹ Tuần 12</span>
+        <b style="font-size:13px">14 – 20 / 09 / 2026</b>
+        <span style="font-size:11px;color:var(--ink-soft)">Tuần 14 ›</span>
+      </div>
+      <div class="weekgrid">
+        <div></div><div class="dow">T2</div><div class="dow">T3</div><div class="dow">T4</div><div class="dow">T5</div><div class="dow">T6</div>
+        <div class="time">7:30</div>
+        <div class="slot c-mint"><b>IT4409</b>Công nghệ Web<div class="room">B1-203</div></div>
+        <div class="slot"></div>
+        <div class="slot c-sky"><b>MA1115</b>Giải tích 1<div class="room">TC-305</div></div>
+        <div class="slot"></div>
+        <div class="slot c-rose"><b>EN1101</b>Tiếng Anh 1<div class="room">D3-101</div></div>
+        <div class="time">9:30</div>
+        <div class="slot"></div>
+        <div class="slot c-beige"><b>PH1110</b>Vật lý 1<div class="room">C1-402</div></div>
+        <div class="slot"></div>
+        <div class="slot c-mint"><b>IT4409</b>Thực hành<div class="room">B4-805</div></div>
+        <div class="slot"></div>
+        <div class="time">13:00</div>
+        <div class="slot c-lav"><b>SSH1150</b>Tư tưởng HCM<div class="room">TC-201</div></div>
+        <div class="slot"></div>
+        <div class="slot c-lemon"><b>IT3011</b>Cấu trúc DL<div class="room">B1-401</div></div>
+        <div class="slot c-beige"><b>PH1110</b>Bài tập<div class="room">C1-301</div></div>
+        <div class="slot"></div>
+      </div>
+      <div class="fab">+</div>
+      <div class="bottomnav"><b>🏠<br>Lịch</b><span>📝<br>Thi</span><span>📊<br>Thống kê</span><span>⚙️<br>Cài đặt</span></div>
+    </div>
+  </div>
+
+  <!-- 2. EXAM BOARD -->
+  <div class="phone">
+    <div class="phone-label">Màn 2 — Bảng lịch thi + Countdown</div>
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="screen">
+      <div class="tabs"><div class="tab">📅 Lịch học</div><div class="tab active">📝 Lịch thi</div></div>
+      <div class="countdown">
+        <div style="font-size:11px;opacity:.9">Môn thi tiếp theo</div>
+        <div class="num">12 ngày</div>
+        <div style="font-size:12px;font-weight:600">Giải tích 1 (MA1115) — Cuối kỳ</div>
+      </div>
+      <div class="card examcard">
+        <h4>Giải tích 1 <span class="chip" style="background:var(--rose)">Cuối kỳ</span></h4>
+        <div class="meta"><span>📆 26/09/2026 · 07:30</span><span>📍 Phòng TC-305</span><span>⏱ 90 phút</span><span class="sbd">SBD: 20261234</span></div>
+      </div>
+      <div class="card examcard">
+        <h4>Cấu trúc dữ liệu <span class="chip" style="background:var(--lemon)">Cuối kỳ</span></h4>
+        <div class="meta"><span>📆 29/09/2026 · 13:00</span><span>📍 Phòng B1-401</span><span>⏱ 90 phút</span><span class="sbd">SBD: 20261234</span></div>
+      </div>
+      <div class="card examcard past">
+        <h4>Vật lý 1 <span class="chip" style="background:var(--line)">Đã qua</span></h4>
+        <div class="meta"><span>📆 05/09/2026 · 09:30</span><span>📍 Phòng C1-402</span></div>
+      </div>
+      <div class="bottomnav"><span>🏠<br>Lịch</span><b>📝<br>Thi</b><span>📊<br>Thống kê</span><span>⚙️<br>Cài đặt</span></div>
+    </div>
+  </div>
+
+  <!-- 3. IMPORT OPTIONS -->
+  <div class="phone">
+    <div class="phone-label">Màn 3 — Chọn phương thức nhập</div>
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="screen">
+      <div style="font-size:16px;font-weight:700;margin:6px 0 14px">Thêm lịch mới ✨</div>
+      <div class="opt"><div class="ic" style="background:var(--sky)">📄</div><div><b>Tải file Word (.docx)</b><small>Bóc tách bảng lịch tự động bằng Apache POI</small></div></div>
+      <div class="opt"><div class="ic" style="background:var(--mint)">🖼️</div><div><b>Tải ảnh (JPG / PNG)</b><small>Quét ảnh chụp màn hình bằng ML Kit OCR</small></div></div>
+      <div class="opt"><div class="ic" style="background:var(--peach)">📷</div><div><b>Chụp ảnh trực tiếp</b><small>Chụp bảng lịch giấy / màn hình máy tính</small></div></div>
+      <div class="opt"><div class="ic" style="background:var(--beige)">✏️</div><div><b>Nhập thủ công</b><small>Tự điền tên môn, giờ học, phòng</small></div></div>
+      <div class="btn ghost">‹ Quay lại</div>
+      <div class="bottomnav"><b>🏠<br>Lịch</b><span>📝<br>Thi</span><span>📊<br>Thống kê</span><span>⚙️<br>Cài đặt</span></div>
+    </div>
+  </div>
+
+  <!-- 4. OCR LOADING -->
+  <div class="phone">
+    <div class="phone-label">Màn 4 — Đang quét (Loading mượt)</div>
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="screen">
+      <div style="text-align:center;padding:40px 20px 24px">
+        <div style="font-size:44px;margin-bottom:14px">🔍</div>
+        <b style="font-size:15px">Đang đọc lịch của bạn…</b>
+        <div class="sub">Giữ yên một chút nhé ☕</div>
+      </div>
+      <div class="card">
+        <div class="shimmer" style="width:70%;margin-bottom:10px"></div>
+        <div class="shimmer" style="width:90%;margin-bottom:10px"></div>
+        <div class="shimmer" style="width:55%"></div>
+      </div>
+      <div class="steps" style="padding:0 8px">
+        <div class="done">✓ Đã đọc ảnh thành công</div>
+        <div class="done">✓ Đã nhận diện bảng lịch</div>
+        <div>● Đang trích xuất 12 môn học…</div>
+      </div>
+      <div class="bottomnav"><b>🏠<br>Lịch</b><span>📝<br>Thi</span><span>📊<br>Thống kê</span><span>⚙️<br>Cài đặt</span></div>
+    </div>
+  </div>
+
+  <!-- 5. PREVIEW & CONFIRM -->
+  <div class="phone">
+    <div class="phone-label">Màn 5 — Preview & chỉnh sửa trước khi lưu</div>
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="screen">
+      <div style="font-size:15px;font-weight:700;margin:6px 0 4px">Kiểm tra dữ liệu 🧐</div>
+      <div class="sub" style="margin-bottom:12px">Hệ thống đọc được <b>3 môn</b>. Các ô tô vàng cần bạn xác nhận.</div>
+      <div class="card">
+        <b style="font-size:13px">🟦 Công nghệ Web</b>
+        <div class="fieldrow"><span>Mã HP</span><span>IT4409</span></div>
+        <div class="fieldrow"><span>Thời gian</span><span>T2 · 7:30 – 9:30</span></div>
+        <div class="fieldrow"><span>Phòng</span><span>B1-203</span></div>
+        <div class="fieldrow"><span>Giảng viên</span><span>TS. Nguyễn V. A</span></div>
+      </div>
+      <div class="card">
+        <b style="font-size:13px">🟨 Giải tích 1</b>
+        <div class="fieldrow"><span>Mã HP</span><span>MA1115</span></div>
+        <div class="fieldrow"><span>Thời gian</span><span>T4 · 7:30 – 9:30</span></div>
+        <div class="fieldrow warnrow"><span>Phòng</span><span class="warn">⚠ "TC-3O5" — sửa?</span></div>
+        <div class="fieldrow"><span>Giảng viên</span><span>—</span></div>
+      </div>
+      <div class="card">
+        <b style="font-size:13px">🟥 Tiếng Anh 1</b>
+        <div class="fieldrow"><span>Mã HP</span><span>EN1101</span></div>
+        <div class="fieldrow warnrow"><span>Thời gian</span><span class="warn">⚠ Chưa rõ giờ kết thúc</span></div>
+        <div class="fieldrow"><span>Phòng</span><span>D3-101</span></div>
+      </div>
+      <div class="btn">✓ Xác nhận & lưu 3 môn</div>
+      <div class="bottomnav"><b>🏠<br>Lịch</b><span>📝<br>Thi</span><span>📊<br>Thống kê</span><span>⚙️<br>Cài đặt</span></div>
+    </div>
+  </div>
+
+  <!-- 6. DESIGN SYSTEM -->
+  <div class="phone">
+    <div class="phone-label">Màn 6 — Design System (Palette & Type)</div>
+    <div class="statusbar"><span>9:41</span><span>📶 🔋</span></div>
+    <div class="screen">
+      <div style="font-size:14px;font-weight:700;margin:6px 0 10px">Bảng màu Pastel 🎨</div>
+      <div class="palette" style="margin-bottom:14px">
+        <div class="swatch" style="background:#7FB3D9">Primary</div>
+        <div class="swatch" style="background:#A8D8C8">Mint</div>
+        <div class="swatch" style="background:#F2E8D5">Beige</div>
+        <div class="swatch" style="background:#F5B8B1">Exam</div>
+        <div class="swatch" style="background:#FAFAF7;border:1px solid var(--line)">BG</div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:8px">MÀU CARD MÔN HỌC</div>
+      <div class="palette" style="margin-bottom:16px">
+        <div class="swatch c-mint">Mint</div><div class="swatch c-sky">Sky</div>
+        <div class="swatch c-beige">Beige</div><div class="swatch c-rose">Rose</div>
+        <div class="swatch c-lav">Lavender</div><div class="swatch c-lemon">Lemon</div>
+        <div class="swatch c-peach">Peach</div>
+      </div>
+      <div class="card">
+        <div style="font-size:28px;font-weight:800">12 ngày</div>
+        <div style="font-size:9px;color:var(--ink-soft);margin-bottom:10px">Display — Countdown (Be Vietnam Pro Bold)</div>
+        <div style="font-size:15px;font-weight:600">Công nghệ Web</div>
+        <div style="font-size:9px;color:var(--ink-soft);margin-bottom:10px">Title — Tên môn trên card</div>
+        <div style="font-size:13px">T2 · 7:30 – 9:30 · Phòng B1-203</div>
+        <div style="font-size:9px;color:var(--ink-soft);margin-bottom:10px">Body — Chi tiết buổi học</div>
+        <div style="font-size:11px;color:var(--ink-soft)">BO GÓC 16–20dp · WHITESPACE RỘNG · SHADOW NHẸ</div>
+      </div>
+      <div class="bottomnav"><span>🏠<br>Lịch</span><span>📝<br>Thi</span><span>📊<br>Thống kê</span><b>⚙️<br>Cài đặt</b></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  <b>Micro-interactions (mô tả, triển khai bằng Jetpack Compose):</b> kéo–thả card môn học kèm haptic rung nhẹ khi nhấc/thả; swipe `HorizontalPager` chuyển tuần & chuyển tab Lịch học ↔ Lịch thi với parallax nhẹ; loading OCR dùng shimmer + progress steps thay vì spinner trần; snackbar bo tròn + icon check animate khi lưu. Dark mode tự theo hệ thống — nhấn nút 🌙/☀️ phía trên để xem thử cả hai theme.
+</div>
+
+</body>
+</html>
