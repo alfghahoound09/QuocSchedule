@@ -1,6 +1,7 @@
 package com.quoc.schedule.feature.timetable
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
@@ -46,21 +47,10 @@ import kotlin.math.roundToInt
 
 private const val DAY_START_MINUTES = 7 * 60        // 07:00
 private const val DAY_END_MINUTES = 18 * 60 + 30    // 18:30
-private const val SLOT_HEIGHT_DP = 64               // 60 phút = 64dp
+private const val SLOT_HEIGHT_DP = 64
 private val SNAP_MINUTES = 30
 
-/** Vị trí thả: ngày trong tuần (0..6) + phút bắt đầu trong ngày. */
-private data class DropTarget(val dayIdx: Int, val startMinutes: Int)
-
-/** Trạng thái kéo–thả trong lưới tuần. */
-private class DragState {
-    var entry by mutableStateOf<TimetableEntry?>(null)
-    var offset by mutableStateOf(Offset.Zero)
-    var gridWidth by mutableStateOf(0)
-    var columnWidthPx by mutableStateOf(0f)
-    var slotHeightPx by mutableStateOf(0f)
-    var hoveredTarget by mutableStateOf<DropTarget?>(null)
-}
+// DropTarget and DragState moved to TimetableScreenNew.kt to avoid duplication
 
 @Composable
 fun TimetableScreen(
