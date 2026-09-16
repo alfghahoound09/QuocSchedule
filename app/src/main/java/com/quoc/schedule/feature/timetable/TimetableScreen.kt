@@ -50,8 +50,6 @@ private const val DAY_END_MINUTES = 18 * 60 + 30    // 18:30
 private const val SLOT_HEIGHT_DP = 64
 private val SNAP_MINUTES = 30
 
-// DropTarget and DragState moved to TimetableScreenNew.kt to avoid duplication
-
 @Composable
 fun TimetableScreen(
     onNavigateToImport: () -> Unit,
@@ -287,7 +285,7 @@ private fun WeekGrid(
         Box(
             Modifier.fillMaxWidth().height(totalHeight)
                 .onGloballyPositioned { coords ->
-                    drag.gridWidth = coords.size.width
+                    coords.size.width.also { drag.gridWidth = it }
                     drag.columnWidthPx = (coords.size.width - with(density) { 38.dp.toPx() }) / 7f
                     drag.slotHeightPx = with(density) { SLOT_HEIGHT_DP.dp.toPx() }
                 }

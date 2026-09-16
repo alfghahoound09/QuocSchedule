@@ -41,16 +41,6 @@ private const val DAY_END_MINUTES = 18 * 60 + 30
 private const val SLOT_HEIGHT_DP = 64
 private val SNAP_MINUTES = 30
 
-private data class DropTarget(val dayIdx: Int, val startMinutes: Int)
-
-private class DragState {
-    var entry by mutableStateOf<TimetableEntry?>(null)
-    var offset by mutableStateOf(Offset.Zero)
-    var columnWidthPx by mutableStateOf(0f)
-    var slotHeightPx by mutableStateOf(0f)
-    var hoveredTarget by mutableStateOf<DropTarget?>(null)
-}
-
 @Composable
 fun TimetableScreenNew(
     onNavigateToImport: () -> Unit,

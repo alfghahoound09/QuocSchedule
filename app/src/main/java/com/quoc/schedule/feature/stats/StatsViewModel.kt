@@ -24,6 +24,7 @@ data class SubjectLoad(
 
 data class StatsUiState(
     val totalHoursPerWeek: Float = 0f,
+    val totalHoursSemester: Float = 0f,
     val totalSubjects: Int = 0,
     val subjectLoads: List<SubjectLoad> = emptyList(),
     val upcomingExams: Int = 0,
@@ -62,9 +63,11 @@ class StatsViewModel @Inject constructor(
                     .sortedByDescending { it.hoursPerWeek }
 
                 val today = LocalDate.now()
+                val totalHoursPerWeek = loads.sumOf { l -> l.hoursPerWeek.toDouble() }.toFloat()
                 _uiState.update {
                     it.copy(
-                        totalHoursPerWeek = loads.sumOf { l -> l.hoursPerWeek.toDouble() }.toFloat(),
+                        totalHoursPerWeek = totalHoursPerWeek,
+                        totalHoursSemester = totalHoursPerWeek,
                         totalSubjects = loads.size,
                         subjectLoads = loads,
                         upcomingExams = exams.count { LocalDate.parse(it.examDate) >= today },
