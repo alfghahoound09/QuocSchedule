@@ -71,24 +71,24 @@ class MainActivity : ComponentActivity() {
                 NavHost(navController = navController, startDestination = Routes.TIMETABLE) {
                     composable(Routes.TIMETABLE) {
                         TimetableScreen(
-                            onNavigateToImport = { navController.navigate(Routes.IMPORT) },
-                            onNavigateToExams = { navController.navigate(Routes.EXAMS) },
-                            onNavigateToStats = { navController.navigate(Routes.STATS) },
-                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
+                            onNavigateToImport = { navController.navigate(Routes.IMPORT, null) },
+                            onNavigateToExams = { navController.navigate(Routes.EXAMS, null) },
+                            onNavigateToStats = { navController.navigate(Routes.STATS, null) },
+                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS, null) }
                         )
                     }
                     composable(Routes.EXAMS) {
                         ExamScreen(
                             onNavigateToTimetable = { navController.popBackStack() },
-                            onNavigateToStats = { navController.navigate(Routes.STATS) },
-                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
+                            onNavigateToStats = { navController.navigate(Routes.STATS, null) },
+                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS, null) }
                         )
                     }
                     composable(Routes.STATS) {
                         StatsScreen(
                             onNavigateToTimetable = { navController.popBackStack() },
-                            onNavigateToExams = { navController.navigate(Routes.EXAMS) },
-                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
+                            onNavigateToExams = { navController.navigate(Routes.EXAMS, null) },
+                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS, null) }
                         )
                     }
                     composable(Routes.SETTINGS) {
@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
                         ImportFlowScreen(
                             onFinished = { navController.popBackStack(Routes.TIMETABLE, false) },
                             onCancel = { navController.popBackStack() },
-                            onOpenCamera = { navController.navigate(Routes.CAMERA) },
+                            onOpenCamera = { navController.navigate(Routes.CAMERA, null) },
                             viewModel = importViewModel
                         )
                     }

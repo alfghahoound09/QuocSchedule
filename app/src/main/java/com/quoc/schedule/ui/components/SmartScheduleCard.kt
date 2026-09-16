@@ -1,6 +1,7 @@
 package com.quoc.schedule.ui.components
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -190,7 +191,7 @@ fun SmartScheduleCard(
                 Spacer(modifier = Modifier.height(Spacing.xs))
 
                 // Room tag
-                RoomTag(room = session.room)
+                RoomTag(room = session.room ?: "Chưa rõ")
             }
         }
     }

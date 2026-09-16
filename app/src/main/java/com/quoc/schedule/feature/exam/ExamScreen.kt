@@ -72,7 +72,9 @@ fun ExamScreen(
                     } ?: EmptyExamHint()
                 }
 
-                items(state.upcoming, key = { it.first.id }) { (exam, subject) ->
+                // ── Upcoming exams sorted by date (soonest first) ──
+                val sortedUpcoming = state.upcoming.sortedBy { it.first.examDate }
+                items(sortedUpcoming, key = { it.first.id }) { (exam, subject) ->
                     ExamCard(exam = exam, subject = subject, past = false, onDelete = { examToDelete = exam to subject })
                 }
 
@@ -85,7 +87,8 @@ fun ExamScreen(
                             modifier = Modifier.padding(top = 8.dp)
                         )
                     }
-                    items(state.past, key = { it.first.id }) { (exam, subject) ->
+                    val sortedPast = state.past.sortedByDescending { it.first.examDate }
+                    items(sortedPast, key = { it.first.id }) { (exam, subject) ->
                         ExamCard(exam = exam, subject = subject, past = true, onDelete = { examToDelete = exam to subject })
                     }
                 }
@@ -182,40 +185,82 @@ fun ExamCard(exam: Exam, subject: Subject, past: Boolean, onDelete: () -> Unit =
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Row(Modifier.height(IntrinsicSize.Min)) {
-            // viền trái màu highlight kiểu exam board
-            Box(
-                Modifier
-                    .width(6.dp)
-                    .fillMaxHeight()
-                    .background(if (past) MaterialTheme.colorScheme.outline else ExamRoseDark)
-            )
-            Column(Modifier.padding(14.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(subject.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                    ExamTypeChip(exam.examType, past)
-                }
-                Spacer(Modifier.height(4.dp))
+        Column(Modifier.padding(14.dp)) {
+            // Header: subject name + exam type chip
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
-                    "📆 ${LocalDate.parse(exam.examDate).format(dateFormatter)} · " +
-                            "⏰ %02d:%02d".format(exam.startMinutes / 60, exam.startMinutes % 60),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    subject.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    exam.room?.let {
-                        Text("📍 $it", style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ExamTypeChip(exam.examType, past)
+            }
+            Spacer(Modifier.height(8.dp))
+
+            // Date + Time
+            Text(
+                "📆 ${LocalDate.parse(exam.examDate).format(dateFormatter)} · ⏰ %02d:%02d".format(exam.startMinutes / 60, exam.startMinutes % 60),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(8.dp))
+
+            // ── ROOM (PROMINENT) + SBD (BOLD) ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                exam.room?.let {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = androidx.compose.ui.graphics.Color(0xFFF59E0B).copy(alpha = 0.2f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text("📍", fontSize = 12.sp)
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = androidx.compose.ui.graphics.Color(0xFFF59E0B)
+                            )
+                        }
                     }
-                    Spacer(Modifier.width(16.dp))
-                    exam.candidateId?.let {
-                        Text("SBD: $it", style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold, color = ExamRoseDark)
+                }
+
+                exam.candidateId?.let {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = ExamRoseDark.copy(alpha = 0.2f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text("🏷", fontSize = 12.sp)
+                            Text(
+                                "SBD: $it",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = ExamRoseDark
+                            )
+                        }
                     }
-                    Spacer(Modifier.weight(1f))
-                    TextButton(onClick = onDelete) {
-                        Text("🗑", fontSize = 14.sp)
-                    }
+                }
+
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    Text("🗑", fontSize = 14.sp)
                 }
             }
         }

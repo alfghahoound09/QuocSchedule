@@ -105,6 +105,42 @@ fun SettingsScreen(
                 }
             }
 
+            val quickJumpOnOpen = remember { mutableStateOf(true) }
+            Card(shape = RoundedCornerShape(18.dp)) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Tự động nhảy về Hôm nay", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Mở app và xem ngày hiện tại ngay lập tức.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = quickJumpOnOpen.value,
+                        onCheckedChange = { quickJumpOnOpen.value = it }
+                    )
+                }
+            }
+
+            Card(shape = RoundedCornerShape(18.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                    Text("Xuất & đồng bộ", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { /* placeholder */ }, modifier = Modifier.weight(1f)) {
+                            Text("📅 Google Cal")
+                        }
+                        OutlinedButton(onClick = { /* placeholder */ }, modifier = Modifier.weight(1f)) {
+                            Text("🎨 Widget")
+                        }
+                    }
+                }
+            }
+
             Spacer(Modifier.weight(1f))
             Text(
                 "QuocSchedule 0.2.0 · dữ liệu lưu trên máy bạn",

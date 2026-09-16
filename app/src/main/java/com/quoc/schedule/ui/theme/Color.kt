@@ -47,6 +47,13 @@ object DarkColors {
 // Subject Pastel Palette (7 colors) - Light bg / Dark accent
 data class SubjectColorPair(val lightBg: Color, val darkAccent: Color)
 
+val ExamRose = Color(0xFFFFD4D4)
+val ExamRoseDark = Color(0xFFEC4899)
+val PastelBlue = Color(0xFFDBEAFE)
+val MintGreen = Color(0xFFD1FAE5)
+val ColorPeach = Color(0xFFFFEDD5)
+val BeigeAccent = Color(0xFFF5E6D3)
+
 val SubjectPalette = listOf(
     SubjectColorPair(Color(0xFFE8F8F0), Color(0xFF10B981)), // mint
     SubjectColorPair(Color(0xFFEAF4FD), Color(0xFF3B82F6)), // sky

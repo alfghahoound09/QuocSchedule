@@ -37,7 +37,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.quoc.schedule.domain.TimetableEntry
 import com.quoc.schedule.ui.theme.subjectCardColor
+import com.quoc.schedule.ui.theme.getSubjectColor
+import androidx.compose.ui.graphics.Color
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
@@ -255,20 +258,38 @@ private fun WeekGrid(
     val totalHeight = (SLOT_HEIGHT_DP * (totalSlots + 1)).dp
     val density = LocalDensity.current
     val haptics = LocalHapticFeedback.current
+    val today = LocalDate.now()
 
     Column(Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = 8.dp)) {
-        // Header thứ
-        Row {
-            Spacer(Modifier.width(38.dp))
-            dayLabels.forEach { day ->
-                Text(
-                    day,
-                    modifier = Modifier.weight(1f),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        // ── Day Strip Header (FIXED) — Shows date + today highlight ──
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Spacer(Modifier.width(30.dp))
+            dayLabels.forEachIndexed { index, day ->
+                val isToday = today.dayOfWeek.value == index + 1
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(2.dp)
+                        .background(
+                            if (isToday) MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        day,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                        fontWeight = FontWeight.Bold,
+                        color = if (isToday) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
         Spacer(Modifier.height(4.dp))
@@ -281,6 +302,12 @@ private fun WeekGrid(
                     drag.slotHeightPx = with(density) { SLOT_HEIGHT_DP.dp.toPx() }
                 }
         ) {
+            val now = LocalTime.now()
+            val currentMinutes = now.hour * 60 + now.minute
+            val currentLineY = if (currentMinutes in DAY_START_MINUTES..DAY_END_MINUTES) {
+                ((currentMinutes - DAY_START_MINUTES).toFloat() / 60f) * SLOT_HEIGHT_DP
+            } else 0f
+
             // lưới nền + cột giờ
             Row {
                 Column(Modifier.width(38.dp)) {
@@ -316,6 +343,31 @@ private fun WeekGrid(
                             }
                         }
                     }
+                }
+            }
+
+            if (currentLineY > 0f) {
+                Box(
+                    Modifier
+                        .offset(y = currentLineY.dp)
+                        .fillMaxWidth()
+                        .padding(start = 38.dp)
+                ) {
+                    Row(Modifier.fillMaxWidth()) {
+                        Spacer(Modifier.width(0.dp))
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(2.dp)
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.9f))
+                        )
+                    }
+                    Box(
+                        Modifier
+                            .size(8.dp)
+                            .background(MaterialTheme.colorScheme.error, RoundedCornerShape(50))
+                            .align(Alignment.TopCenter)
+                    )
                 }
             }
 
@@ -422,8 +474,9 @@ fun ClassCard(
     onDragEnd: () -> Unit = {},
     onDragCancelLocal: () -> Unit = {}
 ) {
-    val color = subjectCardColor(entry.subject.colorKey, isDark)
+    val (bgColor, accentColor) = getSubjectColor(entry.subject.code, isDark)
     val alpha = if (entry.isCancelled) 0.45f else 1f
+
     Surface(
         modifier = Modifier
             .padding(horizontal = 2.dp, vertical = 1.dp)
@@ -444,37 +497,57 @@ fun ClassCard(
                 } else Modifier
             ),
         shape = RoundedCornerShape(10.dp),
-        color = color,
+        color = bgColor,
         shadowElevation = 0.dp
     ) {
-        Column(Modifier.padding(5.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    entry.subject.code.ifBlank { entry.subject.name },
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (entry.isMakeup) {
-                    Spacer(Modifier.width(4.dp))
-                    Text("bù", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(Modifier.fillMaxSize().border(1.dp, accentColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp))) {
+            // Left accent stripe
+            Box(Modifier.width(3.dp).fillMaxHeight().background(accentColor))
+
+            Column(Modifier.padding(start = 6.dp, end = 5.dp, top = 5.dp, bottom = 5.dp).fillMaxSize()) {
+                // Subject code/name
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        entry.subject.code.ifBlank { entry.subject.name },
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (entry.isMakeup) {
+                        Text("bù", fontSize = 7.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
-            }
-            if (height > 56.dp) {
-                Text(
-                    entry.subject.name,
-                    fontSize = 9.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 11.sp
-                )
-            }
-            if (entry.isCancelled) {
-                Text("Đã hủy", fontSize = 8.sp, color = MaterialTheme.colorScheme.error)
-            } else {
-                entry.room?.let {
-                    Text(it, fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                // Full subject name (if space)
+                if (height > 56.dp) {
+                    Text(
+                        entry.subject.name,
+                        fontSize = 9.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 10.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                // Room or status (PROMINENT at bottom)
+                if (entry.isCancelled) {
+                    Text("Đã hủy", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                } else {
+                    entry.room?.let {
+                        Text(
+                            it,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF59E0B), // Amber Yellow — high prominence
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }

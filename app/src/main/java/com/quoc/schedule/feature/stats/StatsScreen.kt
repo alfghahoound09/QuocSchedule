@@ -10,9 +10,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,6 +34,8 @@ fun StatsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val selectedRange = remember { mutableStateOf("Tuần này") }
+    val rangeOptions = listOf("Tuần này", "Cả học kỳ")
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -58,8 +63,8 @@ fun StatsScreen(
                     SummaryCard(
                         modifier = Modifier.weight(1f),
                         emoji = "⏱",
-                        value = "%.1f".format(state.totalHoursPerWeek),
-                        label = "giờ/tuần"
+                        value = "%.1f".format(if (selectedRange.value == "Tuần này") state.totalHoursPerWeek else state.totalHoursSemester),
+                        label = if (selectedRange.value == "Tuần này") "giờ/tuần" else "giờ/kỳ"
                     )
                     SummaryCard(
                         modifier = Modifier.weight(1f),
@@ -73,6 +78,22 @@ fun StatsScreen(
                         value = "${state.upcomingExams}",
                         label = "kỳ thi sắp tới"
                     )
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rangeOptions.forEach { range ->
+                        val selected = selectedRange.value == range
+                        FilterChip(
+                            selected = selected,
+                            onClick = { selectedRange.value = range },
+                            label = { Text(range) }
+                        )
+                    }
                 }
             }
 
@@ -123,7 +144,10 @@ fun SummaryCard(modifier: Modifier, emoji: String, value: String, label: String)
 fun SubjectLoadBar(load: SubjectLoad, maxHours: Float, isDark: Boolean) {
     Card(shape = RoundedCornerShape(18.dp)) {
         Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Box(
                     Modifier.size(12.dp)
                         .background(
@@ -132,17 +156,20 @@ fun SubjectLoadBar(load: SubjectLoad, maxHours: Float, isDark: Boolean) {
                         )
                 )
                 Spacer(Modifier.width(8.dp))
-                Text(
-                    load.subject.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1
-                )
-                Text(
-                    "%.1fh · ${load.sessionsPerWeek} buổi".format(load.hoursPerWeek),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        load.subject.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        "%.1fh · %d buổi".format(load.hoursPerWeek, load.sessionsPerWeek),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             Spacer(Modifier.height(8.dp))
             // thanh bar tỉ lệ
