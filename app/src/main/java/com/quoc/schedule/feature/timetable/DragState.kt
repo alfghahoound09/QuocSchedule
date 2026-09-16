@@ -1,6 +1,8 @@
 package com.quoc.schedule.feature.timetable
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.quoc.schedule.domain.TimetableEntry
 
@@ -11,6 +13,7 @@ data class DropTarget(val dayIdx: Int, val startMinutes: Int)
 class DragState {
     var entry by mutableStateOf<TimetableEntry?>(null)
     var offset by mutableStateOf(Offset.Zero)
+    var gridWidth by mutableStateOf(0)
     var columnWidthPx by mutableStateOf(0f)
     var slotHeightPx by mutableStateOf(0f)
     var hoveredTarget by mutableStateOf<DropTarget?>(null)
