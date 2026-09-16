@@ -3,9 +3,10 @@ package com.quoc.schedule.feature.timetable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -47,7 +48,9 @@ import kotlin.math.roundToInt
 
 private const val DAY_START_MINUTES = 7 * 60        // 07:00
 private const val DAY_END_MINUTES = 18 * 60 + 30    // 18:30
-private const val SLOT_HEIGHT_DP = 64
+private const val SLOT_HEIGHT_DP = 56
+private const val TIME_COLUMN_WIDTH_DP = 38
+private const val DAY_COLUMN_WIDTH_DP = 84
 private val SNAP_MINUTES = 30
 
 @Composable
@@ -86,7 +89,12 @@ fun TimetableScreen(
             )
         }
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
+        Column(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(if (isDark) MaterialTheme.colorScheme.background else Color(0xFFFAFAF7))
+        ) {
             TopTabs(selected = 0, onSelect = { if (it == 1) onNavigateToExams() })
             WeekHeader(
                 weekStart = state.weekStart,
@@ -103,6 +111,7 @@ fun TimetableScreen(
             } else {
                 WeekGrid(
                     entries = state.entries,
+                    weekStart = state.weekStart,
                     isDark = isDark,
                     drag = drag,
                     onDropConfirm = { entry, target ->
@@ -173,9 +182,13 @@ fun TimetableScreen(
 @Composable
 fun TopTabs(selected: Int, onSelect: (Int) -> Unit) {
     Surface(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = if (androidx.compose.foundation.isSystemInDarkTheme()) {
+            MaterialTheme.colorScheme.surfaceVariant
+        } else {
+            Color(0xFFEDEAE3)
+        }
     ) {
         Row(Modifier.padding(4.dp)) {
             listOf("📅 Lịch học", "📝 Lịch thi").forEachIndexed { i, label ->
@@ -183,8 +196,13 @@ fun TopTabs(selected: Int, onSelect: (Int) -> Unit) {
                 Surface(
                     modifier = Modifier.weight(1f).clickable { onSelect(i) },
                     shape = RoundedCornerShape(999.dp),
-                    color = if (active) MaterialTheme.colorScheme.surface
-                            else MaterialTheme.colorScheme.surfaceVariant
+                    color = if (active) {
+                        if (androidx.compose.foundation.isSystemInDarkTheme()) {
+                            MaterialTheme.colorScheme.surface
+                        } else {
+                            Color.White
+                        }
+                    } else Color.Transparent
                 ) {
                     Text(
                         label,
@@ -210,31 +228,52 @@ fun WeekHeader(
     onNext: () -> Unit,
     onToday: () -> Unit
 ) {
-    val formatter = DateTimeFormatter.ofPattern("dd/MM")
+    val formatter = DateTimeFormatter.ofPattern("dd")
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        IconButton(onClick = onPrev) { Icon(Icons.Default.ChevronLeft, "Tuần trước") }
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(onClick = onToday)) {
+        TextButton(onClick = onPrev, contentPadding = PaddingValues(0.dp)) {
             Text(
-                "${weekStart.format(formatter)} – ${weekStart.plusDays(6).format(formatter)} / ${weekStart.year}",
-                style = MaterialTheme.typography.titleMedium
+                "‹ Tuần ${if (weekKnown) (weekNumber - 1).coerceAtLeast(1) else "trước"}",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.clickable(onClick = onToday)
+        ) {
+            Text(
+                "${weekStart.format(formatter)} – ${weekStart.plusDays(6).format(formatter)} / " +
+                        "%02d / %d".format(weekStart.monthValue, weekStart.year),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
             Text(
-                if (weekKnown) "Tuần $weekNumber · chạm để về hôm nay" else "chạm để về hôm nay · đặt tuần 1 trong Cài đặt",
+                if (weekKnown) "Tuần $weekNumber · chạm để về hôm nay"
+                else "chạm để về hôm nay · đặt tuần 1 trong Cài đặt",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        IconButton(onClick = onNext) { Icon(Icons.Default.ChevronRight, "Tuần sau") }
+        TextButton(onClick = onNext, contentPadding = PaddingValues(0.dp)) {
+            Text(
+                "Tuần ${if (weekKnown) weekNumber + 1 else "sau"} ›",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
     }
 }
 
 @Composable
 private fun WeekGrid(
     entries: List<TimetableEntry>,
+    weekStart: LocalDate,
     isDark: Boolean,
     drag: DragState,
     onDropConfirm: (TimetableEntry, DropTarget) -> Unit,
@@ -247,20 +286,25 @@ private fun WeekGrid(
     val density = LocalDensity.current
     val haptics = LocalHapticFeedback.current
     val today = LocalDate.now()
+    val horizontalScrollState = rememberScrollState()
+    val gridWidth = TIME_COLUMN_WIDTH_DP + DAY_COLUMN_WIDTH_DP * 7
 
     Column(Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = 8.dp)) {
         // ── Day Strip Header (FIXED) — Shows date + today highlight ──
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier
+                .horizontalScroll(horizontalScrollState)
+                .width(gridWidth.dp)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.width(30.dp))
+            Spacer(Modifier.width(TIME_COLUMN_WIDTH_DP.dp))
             dayLabels.forEachIndexed { index, day ->
-                val isToday = today.dayOfWeek.value == index + 1
+                val date = weekStart.plusDays(index.toLong())
+                val isToday = date == today
                 Box(
                     modifier = Modifier
-                        .weight(1f)
+                        .width(DAY_COLUMN_WIDTH_DP.dp)
                         .padding(2.dp)
                         .background(
                             if (isToday) MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
@@ -271,7 +315,7 @@ private fun WeekGrid(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        day,
+                        "$day\n${date.dayOfMonth}",
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                         fontWeight = FontWeight.Bold,
@@ -283,22 +327,28 @@ private fun WeekGrid(
         Spacer(Modifier.height(4.dp))
 
         Box(
-            Modifier.fillMaxWidth().height(totalHeight)
+            Modifier
+                .horizontalScroll(horizontalScrollState)
+                .width(gridWidth.dp)
+                .height(totalHeight)
                 .onGloballyPositioned { coords ->
                     coords.size.width.also { drag.gridWidth = it }
-                    drag.columnWidthPx = (coords.size.width - with(density) { 38.dp.toPx() }) / 7f
+                    drag.columnWidthPx = with(density) { DAY_COLUMN_WIDTH_DP.dp.toPx() }
                     drag.slotHeightPx = with(density) { SLOT_HEIGHT_DP.dp.toPx() }
                 }
         ) {
             val now = LocalTime.now()
             val currentMinutes = now.hour * 60 + now.minute
-            val currentLineY = if (currentMinutes in DAY_START_MINUTES..DAY_END_MINUTES) {
+            val currentLineY = if (
+                today in weekStart..weekStart.plusDays(6) &&
+                currentMinutes in DAY_START_MINUTES..DAY_END_MINUTES
+            ) {
                 ((currentMinutes - DAY_START_MINUTES).toFloat() / 60f) * SLOT_HEIGHT_DP
             } else 0f
 
             // lưới nền + cột giờ
             Row {
-                Column(Modifier.width(38.dp)) {
+                Column(Modifier.width(TIME_COLUMN_WIDTH_DP.dp)) {
                     for (slot in 0..totalSlots) {
                         Text(
                             "%02d:00".format((DAY_START_MINUTES + slot * 60) / 60),
@@ -309,9 +359,9 @@ private fun WeekGrid(
                         )
                     }
                 }
-                Row(Modifier.weight(1f)) {
+                Row(Modifier.width((DAY_COLUMN_WIDTH_DP * 7).dp)) {
                     repeat(7) { dayIdx ->
-                        Column(Modifier.weight(1f)) {
+                        Column(Modifier.width(DAY_COLUMN_WIDTH_DP.dp)) {
                             repeat(totalSlots + 1) { slot ->
                                 val isHovered = drag.hoveredTarget?.let {
                                     it.dayIdx == dayIdx &&
@@ -323,8 +373,10 @@ private fun WeekGrid(
                                         .background(
                                             if (isHovered)
                                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                                            else if (isDark)
+                                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                                             else
-                                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                                                Color.White,
                                             RoundedCornerShape(6.dp)
                                         )
                                 )
@@ -339,7 +391,7 @@ private fun WeekGrid(
                     Modifier
                         .offset(y = currentLineY.dp)
                         .fillMaxWidth()
-                        .padding(start = 38.dp)
+                        .padding(start = TIME_COLUMN_WIDTH_DP.dp)
                 ) {
                     Row(Modifier.fillMaxWidth()) {
                         Spacer(Modifier.width(0.dp))
@@ -361,12 +413,12 @@ private fun WeekGrid(
 
             // các card môn học (không tính card đang kéo)
             Row(Modifier.fillMaxSize()) {
-                Spacer(Modifier.width(38.dp))
+                Spacer(Modifier.width(TIME_COLUMN_WIDTH_DP.dp))
                 for (dayIdx in 0..6) {
                     val dayEntries = entries.filter {
                         it.date.dayOfWeek.value == dayIdx + 1 && it.sessionId != drag.entry?.sessionId
                     }
-                    Box(Modifier.weight(1f).fillMaxHeight()) {
+                    Box(Modifier.width(DAY_COLUMN_WIDTH_DP.dp).fillMaxHeight()) {
                         dayEntries.forEach { entry ->
                             val startOffset = (entry.startMinutes - DAY_START_MINUTES).coerceAtLeast(0)
                             val duration = (entry.endMinutes - entry.startMinutes).coerceAtLeast(45)
@@ -438,7 +490,7 @@ private fun WeekGrid(
                     Modifier
                         .zIndex(10f)
                         .offset { IntOffset((baseX + drag.offset.x).roundToInt(), (baseY + drag.offset.y).roundToInt()) }
-                        .width((drag.columnWidthPx / density.density).dp)
+                        .width(DAY_COLUMN_WIDTH_DP.dp)
                         .height(cardHeight)
                         .graphicsLayer { scaleX = 1.02f; scaleY = 1.02f; shadowElevation = 12f }
                         .alpha(0.92f)
@@ -473,7 +525,7 @@ fun ClassCard(
             .alpha(alpha)
             .then(
                 if (draggable) Modifier.pointerInput(entry.sessionId) {
-                    detectDragGestures(
+                    detectDragGesturesAfterLongPress(
                         onDragStart = { onDragStart() },
                         onDrag = { change, amount ->
                             change.consume()
@@ -531,7 +583,7 @@ fun ClassCard(
                             it,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFF59E0B), // Amber Yellow — high prominence
+                            color =                             Color(0xFFC77E2C), // HTML mockup's warm accent
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
