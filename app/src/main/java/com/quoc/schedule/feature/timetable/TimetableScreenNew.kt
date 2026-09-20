@@ -59,15 +59,38 @@ fun TimetableScreenNew(
     val haptics = LocalHapticFeedback.current
     val drag = remember { DragState() }
     var conflictDialog by remember { mutableStateOf<Triple<TimetableEntry, List<TimetableEntry>, DropTarget>?>(null) }
+    var editingEntry by remember { mutableStateOf<TimetableEntry?>(null) }
+    var showFabMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToImport,
-                shape = RoundedCornerShape(16.dp),
-                containerColor = MaterialTheme.colorScheme.primary
-            ) { Icon(Icons.Default.Add, contentDescription = "Thêm lịch") }
+            Box {
+                DropdownMenu(
+                    expanded = showFabMenu,
+                    onDismissRequest = { showFabMenu = false }
+                ) {
+                    DropdownMenuItem(text = { Text("Nhập từ ảnh/web") }, onClick = { showFabMenu = false; onNavigateToImport() })
+                    DropdownMenuItem(text = { Text("Thêm thủ công") }, onClick = { 
+                        showFabMenu = false
+                        editingEntry = TimetableEntry(
+                            sessionId = -1,
+                            subject = com.quoc.schedule.core.database.Subject(id = -1, code = "", name = "", lecturer = "", colorKey = 0),
+                            date = state.weekStart,
+                            startMinutes = 7 * 60,
+                            endMinutes = 9 * 60,
+                            room = "",
+                            isMakeup = false,
+                            isCancelled = false
+                        )
+                    })
+                }
+                FloatingActionButton(
+                    onClick = { showFabMenu = true },
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) { Icon(Icons.Default.Add, contentDescription = "Thêm lịch") }
+            }
         },
         bottomBar = {
             ScheduleBottomBarNew(selected = 0, onExams = onNavigateToExams, onStats = onNavigateToStats, onSettings = onNavigateToSettings)
@@ -136,6 +159,23 @@ fun TimetableScreenNew(
                 }) { Text("Vẫn chuyển") }
             },
             dismissButton = { TextButton(onClick = { conflictDialog = null }) { Text("Hủy") } }
+        )
+    }
+
+    editingEntry?.let { entry ->
+        EditEntrySheet(
+            entry = entry,
+            onDismiss = { editingEntry = null },
+            onSave = { name, room, day, start, end ->
+                if (entry.sessionId != -1L) {
+                    viewModel.updateEntry(entry.sessionId, name, room, day, start, end)
+                }
+                editingEntry = null
+            },
+            onDelete = {
+                if (entry.sessionId != -1L) viewModel.deleteEntry(entry.sessionId)
+                editingEntry = null
+            }
         )
     }
 }
@@ -218,7 +258,8 @@ private fun WeekGridNew(
     isDark: Boolean,
     drag: DragState,
     onDropConfirm: (TimetableEntry, DropTarget) -> Unit,
-    onDragCancel: () -> Unit
+    onDragCancel: () -> Unit,
+    onEdit: (TimetableEntry) -> Unit = {}
 ) {
     val dayLabels = listOf("T2", "T3", "T4", "T5", "T6")
     val scrollState = rememberScrollState()
@@ -276,51 +317,78 @@ private fun WeekGridNew(
             Row(Modifier.fillMaxSize()) {
                 Spacer(Modifier.width(34.dp))
                 for (dayIdx in 0..4) {
-                    val dayEntries = entries.filter { it.date.dayOfWeek.value == dayIdx + 1 && it.sessionId != drag.entry?.sessionId }
+                    val dayEntries = entries.filter { it.date.dayOfWeek.value == dayIdx + 1 }
                     Box(Modifier.weight(1f).fillMaxHeight()) {
-                        dayEntries.forEach { entry ->
-                            val startOffset = (entry.startMinutes - DAY_START_MINUTES).coerceAtLeast(0)
-                            val duration = (entry.endMinutes - entry.startMinutes).coerceAtLeast(45)
-                            val top = (startOffset * SLOT_HEIGHT_DP / 60f).dp
-                            val cardHeight = (duration * SLOT_HEIGHT_DP / 60f).coerceAtLeast(40f).dp
-                            Box(Modifier.fillMaxWidth().offset(y = top).height(cardHeight)) {
-                                ClassCardNew(
-                                    entry = entry,
-                                    height = cardHeight,
-                                    isDark = isDark,
-                                    draggable = true,
-                                    onDragStart = {
-                                        drag.entry = entry
-                                        drag.offset = Offset.Zero
-                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    },
-                                    onDrag = { delta ->
-                                        drag.offset += delta
-                                        val dayW = drag.columnWidthPx
-                                        if (dayW > 0) {
-                                            val x = dayIdx * dayW + drag.offset.x + dayW / 2
-                                            val y = (entry.startMinutes - DAY_START_MINUTES) / 60f * drag.slotHeightPx + drag.offset.y
-                                            val newDay = (x / dayW).roundToInt().coerceIn(0, 4)
-                                            val rawMin = DAY_START_MINUTES + (y / drag.slotHeightPx * 60).roundToInt()
-                                            val snapped = (rawMin / SNAP_MINUTES) * SNAP_MINUTES
-                                            drag.hoveredTarget = DropTarget(newDay, snapped.coerceIn(DAY_START_MINUTES, DAY_END_MINUTES - 30))
-                                        }
-                                    },
-                                    onDragEnd = {
-                                        val target = drag.hoveredTarget
-                                        val current = drag.entry
-                                        if (current != null && target != null) onDropConfirm(current, target) else if (current != null) onDragCancel()
-                                        drag.entry = null
-                                        drag.offset = Offset.Zero
-                                        drag.hoveredTarget = null
-                                    },
-                                    onDragCancelLocal = {
-                                        onDragCancel()
-                                        drag.entry = null
-                                        drag.offset = Offset.Zero
-                                        drag.hoveredTarget = null
+                        val overlaps = mutableListOf<MutableList<TimetableEntry>>()
+                        dayEntries.sortedBy { it.startMinutes }.forEach { entry ->
+                            val overlappingGroup = overlaps.firstOrNull { group ->
+                                group.any { maxOf(it.startMinutes, entry.startMinutes) < minOf(it.endMinutes, entry.endMinutes) }
+                            }
+                            if (overlappingGroup != null) {
+                                overlappingGroup.add(entry)
+                            } else {
+                                overlaps.add(mutableListOf(entry))
+                            }
+                        }
+
+                        overlaps.forEach { group ->
+                            val cols = group.size
+                            group.forEachIndexed { index, entry ->
+                                val startOffset = (entry.startMinutes - DAY_START_MINUTES).coerceAtLeast(0)
+                                val duration = (entry.endMinutes - entry.startMinutes).coerceAtLeast(45)
+                                val top = (startOffset * SLOT_HEIGHT_DP / 60f).dp
+                                val cardHeight = (duration * SLOT_HEIGHT_DP / 60f).coerceAtLeast(40f).dp
+                                val isDragged = entry.sessionId == drag.entry?.sessionId
+
+                                BoxWithConstraints(
+                                    Modifier
+                                        .fillMaxWidth(1f / cols)
+                                        .absoluteOffset(y = top)
+                                        .height(cardHeight)
+                                ) {
+                                    val w = maxWidth
+                                    Box(Modifier.absoluteOffset(x = w * index).padding(end = 4.dp, bottom = 2.dp)) {
+                                        ClassCardNew(
+                                            entry = entry,
+                                            height = cardHeight,
+                                            isDark = isDark,
+                                            draggable = true,
+                                            isDragged = isDragged,
+                                            onClick = { onEdit(entry) },
+                                            onDragStart = {
+                                                drag.entry = entry
+                                                drag.offset = Offset.Zero
+                                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            },
+                                            onDrag = { delta ->
+                                                drag.offset += delta
+                                                val dayW = drag.columnWidthPx
+                                                if (dayW > 0) {
+                                                    val x = dayIdx * dayW + drag.offset.x + dayW / 2
+                                                    val y = (entry.startMinutes - DAY_START_MINUTES) / 60f * drag.slotHeightPx + drag.offset.y
+                                                    val newDay = (x / dayW).roundToInt().coerceIn(0, 4)
+                                                    val rawMin = DAY_START_MINUTES + (y / drag.slotHeightPx * 60).roundToInt()
+                                                    val snapped = (rawMin / SNAP_MINUTES) * SNAP_MINUTES
+                                                    drag.hoveredTarget = DropTarget(newDay, snapped.coerceIn(DAY_START_MINUTES, DAY_END_MINUTES - 30))
+                                                }
+                                            },
+                                            onDragEnd = {
+                                                val target = drag.hoveredTarget
+                                                val current = drag.entry
+                                                if (current != null && target != null) onDropConfirm(current, target) else if (current != null) onDragCancel()
+                                                drag.entry = null
+                                                drag.offset = Offset.Zero
+                                                drag.hoveredTarget = null
+                                            },
+                                            onDragCancelLocal = {
+                                                onDragCancel()
+                                                drag.entry = null
+                                                drag.offset = Offset.Zero
+                                                drag.hoveredTarget = null
+                                            }
+                                        )
                                     }
-                                )
+                                }
                             }
                         }
                     }
@@ -355,19 +423,23 @@ fun ClassCardNew(
     height: androidx.compose.ui.unit.Dp,
     isDark: Boolean,
     draggable: Boolean = false,
+    isDragged: Boolean = false,
+    onClick: () -> Unit = {},
     onDragStart: () -> Unit = {},
     onDrag: (Offset) -> Unit = {},
     onDragEnd: () -> Unit = {},
     onDragCancelLocal: () -> Unit = {}
 ) {
     val color = subjectCardColor(entry.subject.colorKey, isDark)
-    val alpha = if (entry.isCancelled) 0.45f else 1f
+    val baseAlpha = if (entry.isCancelled) 0.45f else 1f
+    val finalAlpha = if (isDragged) 0f else baseAlpha
     Surface(
         modifier = Modifier
             .padding(horizontal = 2.dp, vertical = 1.dp)
             .fillMaxWidth()
             .height(height)
-            .alpha(alpha)
+            .alpha(finalAlpha)
+            .clickable { onClick() }
             .then(
                 if (draggable) Modifier.pointerInput(entry.sessionId) {
                     detectDragGestures(
@@ -424,5 +496,88 @@ fun ScheduleBottomBarNew(
             colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
         NavigationBarItem(selected = selected == 3, onClick = onSettings, icon = { Text("⚙️", fontSize = 16.sp) }, label = { Text("Cài đặt", fontSize = 10.sp) },
             colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditEntrySheet(
+    entry: TimetableEntry,
+    onDismiss: () -> Unit,
+    onSave: (newName: String, newRoom: String, newDay: Int, newStart: Int, newEnd: Int) -> Unit,
+    onDelete: () -> Unit
+) {
+    var name by remember { mutableStateOf(entry.subject.name) }
+    var room by remember { mutableStateOf(entry.room ?: "") }
+    var day by remember { mutableStateOf(entry.date.dayOfWeek.value + 1) }
+
+    var startTime by remember { mutableStateOf("%02d:%02d".format(entry.startMinutes / 60, entry.startMinutes % 60)) }
+    var endTime by remember { mutableStateOf("%02d:%02d".format(entry.endMinutes / 60, entry.endMinutes % 60)) }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp)
+                .fillMaxWidth()
+        ) {
+            Text("Chỉnh sửa môn học", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Tên môn học") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = room,
+                onValueChange = { room = it },
+                label = { Text("Phòng học") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = day.toString(),
+                    onValueChange = { day = it.toIntOrNull() ?: day },
+                    label = { Text("Thứ (2-8)") },
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = startTime,
+                    onValueChange = { startTime = it },
+                    label = { Text("Bắt đầu (HH:mm)") },
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = endTime,
+                    onValueChange = { endTime = it },
+                    label = { Text("Kết thúc") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(Modifier.height(24.dp))
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onDelete, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                    Text("Xóa")
+                }
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy")
+                }
+                Button(onClick = {
+                    val startM = startTime.split(":").let { it.getOrNull(0)?.toIntOrNull()?.times(60)?.plus(it.getOrNull(1)?.toIntOrNull() ?: 0) } ?: entry.startMinutes
+                    val endM = endTime.split(":").let { it.getOrNull(0)?.toIntOrNull()?.times(60)?.plus(it.getOrNull(1)?.toIntOrNull() ?: 0) } ?: entry.endMinutes
+                    onSave(name, room, day, startM, endM)
+                }) {
+                    Text("Lưu")
+                }
+            }
+        }
     }
 }
