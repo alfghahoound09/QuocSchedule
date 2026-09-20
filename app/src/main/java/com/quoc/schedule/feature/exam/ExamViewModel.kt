@@ -13,9 +13,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+import com.quoc.schedule.core.model.ExamType
 
 data class ExamUiState(
     val upcoming: List<Pair<Exam, Subject>> = emptyList(),
@@ -58,5 +60,55 @@ class ExamViewModel @Inject constructor(
 
     fun deleteExam(exam: Exam) {
         viewModelScope.launch { repository.deleteExam(exam) }
+    }
+
+    fun saveExam(
+        examId: Long,
+        subjectName: String,
+        room: String,
+        dateStr: String,
+        startMinutes: Int,
+        durationMinutes: Int,
+        examType: ExamType
+    ) {
+        viewModelScope.launch {
+            val subjectId = findOrCreateSubject(subjectName)
+            val exam = if (examId == -1L) {
+                Exam(
+                    subjectId = subjectId,
+                    examDate = dateStr,
+                    startMinutes = startMinutes,
+                    durationMinutes = durationMinutes,
+                    room = room,
+                    candidateId = null,
+                    examType = examType
+                )
+            } else {
+                Exam(
+                    id = examId,
+                    subjectId = subjectId,
+                    examDate = dateStr,
+                    startMinutes = startMinutes,
+                    durationMinutes = durationMinutes,
+                    room = room,
+                    candidateId = null,
+                    examType = examType
+                )
+            }
+            repository.addExam(exam)
+        }
+    }
+
+    private suspend fun findOrCreateSubject(name: String): Long {
+        val existing = repository.observeSubjects().first()
+            .find { it.name.equals(name, ignoreCase = true) || it.code.equals(name, ignoreCase = true) }
+        if (existing != null) return existing.id
+        val newSubject = Subject(
+            code = "",
+            name = name,
+            lecturer = "",
+            colorKey = repository.colorKeyFor(name)
+        )
+        return repository.addSubject(newSubject)
     }
 }
