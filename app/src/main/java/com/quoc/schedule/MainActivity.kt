@@ -2,7 +2,9 @@ package com.quoc.schedule
 
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
@@ -16,6 +18,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.quoc.schedule.core.data.prefs.AppLanguage
 import com.quoc.schedule.core.data.prefs.ThemeMode
 import com.quoc.schedule.core.data.prefs.UserPrefsRepository
 import com.quoc.schedule.feature.camera.CameraScreen
@@ -50,16 +53,28 @@ class AppViewModel @Inject constructor(
     val themeMode: StateFlow<ThemeMode> = prefsRepository.prefs
         .map { it.themeMode }
         .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
+    val language: StateFlow<AppLanguage> = prefsRepository.prefs
+        .map { it.language }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AppLanguage.SYSTEM)
 }
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val appViewModel: AppViewModel = hiltViewModel()
             val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
+            val language by appViewModel.language.collectAsStateWithLifecycle()
+
+            androidx.compose.runtime.LaunchedEffect(language) {
+                if (language != AppLanguage.SYSTEM) {
+                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.tag))
+                } else {
+                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
+                }
+            }
 
             QuocScheduleTheme(
                 darkTheme = when (themeMode) {

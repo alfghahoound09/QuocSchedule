@@ -1,6 +1,7 @@
 package com.quoc.schedule.feature.exam
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +11,8 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.EventNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
+import com.quoc.schedule.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -40,9 +43,32 @@ fun ExamScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var examToDelete by remember { mutableStateOf<Pair<Exam, Subject>?>(null) }
+    var editingExam by remember { mutableStateOf<Pair<Exam, Subject>?>(null) }
+
+    val startAddingNew = {
+        editingExam = Exam(
+            id = -1,
+            subjectId = -1,
+            examDate = LocalDate.now().format(dateFormatter),
+            startMinutes = 7 * 60 + 30,
+            durationMinutes = 90,
+            room = "",
+            candidateId = null,
+            examType = ExamType.FINAL
+        ) to Subject(id = -1, code = "", name = "", lecturer = "", colorKey = 0)
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        floatingActionButton = {
+            if (state.upcoming.isNotEmpty() || state.past.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = startAddingNew,
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) { Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.str_th__m_l___ch_thi)) }
+            }
+        },
         bottomBar = {
             ScheduleBottomBar(selected = 1, onTimetable = onNavigateToTimetable, onExams = {}, onStats = onNavigateToStats, onSettings = onNavigateToSettings)
         }
@@ -70,13 +96,13 @@ fun ExamScreen(
                             dateText = next.date.format(dateFormatter),
                             timeText = "%02d:%02d".format(next.startMinutes / 60, next.startMinutes % 60)
                         )
-                    } ?: EmptyExamHint(onNavigateToTimetable)
+                    } ?: EmptyExamHint(startAddingNew)
                 }
 
                 // ── Upcoming exams sorted by date (soonest first) ──
                 val sortedUpcoming = state.upcoming.sortedBy { it.first.examDate }
                 items(sortedUpcoming, key = { it.first.id }) { (exam, subject) ->
-                    ExamCard(exam = exam, subject = subject, past = false, onDelete = { examToDelete = exam to subject })
+                    ExamCard(exam = exam, subject = subject, past = false, onClick = { editingExam = exam to subject }, onDelete = { examToDelete = exam to subject })
                 }
 
                 if (state.past.isNotEmpty()) {
@@ -90,7 +116,7 @@ fun ExamScreen(
                     }
                     val sortedPast = state.past.sortedByDescending { it.first.examDate }
                     items(sortedPast, key = { it.first.id }) { (exam, subject) ->
-                        ExamCard(exam = exam, subject = subject, past = true, onDelete = { examToDelete = exam to subject })
+                        ExamCard(exam = exam, subject = subject, past = true, onClick = { editingExam = exam to subject }, onDelete = { examToDelete = exam to subject })
                     }
                 }
 
@@ -99,19 +125,35 @@ fun ExamScreen(
         }
     }
 
+    editingExam?.let { (exam, subject) ->
+        EditExamSheet(
+            exam = exam,
+            subject = subject,
+            onDismiss = { editingExam = null },
+            onSave = { subjectName, room, dateStr, startMinutes, durationMinutes, type ->
+                viewModel.saveExam(exam.id, subjectName, room, dateStr, startMinutes, durationMinutes, type)
+                editingExam = null
+            },
+            onDelete = {
+                examToDelete = exam to subject
+                editingExam = null
+            }
+        )
+    }
+
     // Xác nhận xóa lịch thi
     examToDelete?.let { (exam, subject) ->
         AlertDialog(
             onDismissRequest = { examToDelete = null },
-            title = { Text("Xóa lịch thi?") },
+            title = { Text(stringResource(R.string.str_x__a_l___ch_thi)) },
             text = { Text("Môn ${subject.name} ngày ${LocalDate.parse(exam.examDate).format(dateFormatter)} sẽ bị xóa khỏi danh sách.") },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteExam(exam)
                     examToDelete = null
-                }) { Text("Xóa", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.str_x__a), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { examToDelete = null }) { Text("Giữ lại") } }
+            dismissButton = { TextButton(onClick = { examToDelete = null }) { Text(stringResource(R.string.str_gi____l___i)) } }
         )
     }
 }
@@ -135,7 +177,7 @@ fun CountdownCard(
             .padding(20.dp)
     ) {
         Column {
-            Text("Môn thi tiếp theo", color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.9f), fontSize = 12.sp)
+            Text(stringResource(R.string.str_m__n_thi_ti___p_theo), color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.9f), fontSize = 12.sp)
             Text(
                 if (daysLeft == 0L) "Hôm nay!" else "$daysLeft ngày",
                 color = androidx.compose.ui.graphics.Color.White,
@@ -173,7 +215,7 @@ fun EmptyExamHint(onNavigateToTimetable: () -> Unit) {
                 Icon(Icons.Rounded.EventNote, contentDescription = null, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary)
             }
             Spacer(Modifier.height(16.dp))
-            Text("Chưa có lịch thi nào", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.str_ch__a_c___l___ch_thi_), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
             Text(
                 "Bạn có thể tải lịch thi từ ảnh hoặc file Word bằng cách thêm lịch mới.",
@@ -185,16 +227,16 @@ fun EmptyExamHint(onNavigateToTimetable: () -> Unit) {
             Button(onClick = onNavigateToTimetable, shape = RoundedCornerShape(14.dp)) {
                 Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Thêm lịch thi ngay")
+                Text(stringResource(R.string.str_th__m_l___ch_thi_ngay))
             }
         }
     }
 }
 
 @Composable
-fun ExamCard(exam: Exam, subject: Subject, past: Boolean, onDelete: () -> Unit = {}) {
+fun ExamCard(exam: Exam, subject: Subject, past: Boolean, onClick: () -> Unit = {}, onDelete: () -> Unit = {}) {
     Card(
-        modifier = Modifier.fillMaxWidth().alpha(if (past) 0.5f else 1f),
+        modifier = Modifier.fillMaxWidth().alpha(if (past) 0.5f else 1f).clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -240,7 +282,7 @@ fun ExamCard(exam: Exam, subject: Subject, past: Boolean, onDelete: () -> Unit =
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text("📍", fontSize = 12.sp)
+                            Text(stringResource(R.string.str_unknown), fontSize = 12.sp)
                             Text(
                                 it,
                                 style = MaterialTheme.typography.bodyMedium,
@@ -261,7 +303,7 @@ fun ExamCard(exam: Exam, subject: Subject, past: Boolean, onDelete: () -> Unit =
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text("🏷", fontSize = 12.sp)
+                            Text(stringResource(R.string.str_unknown), fontSize = 12.sp)
                             Text(
                                 "SBD: $it",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -274,7 +316,7 @@ fun ExamCard(exam: Exam, subject: Subject, past: Boolean, onDelete: () -> Unit =
 
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                    Text("🗑", fontSize = 14.sp)
+                    Text(stringResource(R.string.str_unknown), fontSize = 14.sp)
                 }
             }
         }
@@ -305,3 +347,109 @@ fun examTypeLabel(type: ExamType) = when (type) {
     ExamType.FINAL -> "Cuối kỳ"
     ExamType.RETAKE -> "Thi lại"
 }
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun EditExamSheet(
+    exam: Exam,
+    subject: Subject,
+    onDismiss: () -> Unit,
+    onSave: (subjectName: String, room: String, dateStr: String, startMinutes: Int, durationMinutes: Int, type: ExamType) -> Unit,
+    onDelete: () -> Unit
+) {
+    var subjectName by remember { mutableStateOf(subject.name) }
+    var room by remember { mutableStateOf(exam.room ?: "") }
+    var dateStr by remember { mutableStateOf(exam.examDate) }
+    var startTime by remember { mutableStateOf("%02d:%02d".format(exam.startMinutes / 60, exam.startMinutes % 60)) }
+    var duration by remember { mutableStateOf(exam.durationMinutes.toString()) }
+    var examType by remember { mutableStateOf(exam.examType) }
+
+    androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(bottom = 32.dp)
+                .fillMaxWidth()
+        ) {
+            Text(if (exam.id == -1L) "Thêm lịch thi" else "Chỉnh sửa lịch thi", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(16.dp))
+
+            androidx.compose.material3.OutlinedTextField(
+                value = subjectName,
+                onValueChange = { subjectName = it },
+                label = { Text(stringResource(R.string.str_t__n_m__n_h___c)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+
+            androidx.compose.material3.OutlinedTextField(
+                value = room,
+                onValueChange = { room = it },
+                label = { Text(stringResource(R.string.str_ph__ng_thi)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                androidx.compose.material3.OutlinedTextField(
+                    value = dateStr,
+                    onValueChange = { dateStr = it },
+                    label = { Text(stringResource(R.string.str_ng__y__yyyy_mm_dd)) },
+                    modifier = Modifier.weight(1f)
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = startTime,
+                    onValueChange = { startTime = it },
+                    label = { Text(stringResource(R.string.str_b___t______u__hh_mm)) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                androidx.compose.material3.OutlinedTextField(
+                    value = duration,
+                    onValueChange = { duration = it },
+                    label = { Text(stringResource(R.string.str_th___i_l_____ng__ph__)) },
+                    modifier = Modifier.weight(1f)
+                )
+                
+                Box(Modifier.weight(1f)) {
+                    var expanded by remember { mutableStateOf(false) }
+                    androidx.compose.material3.OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                        Text(if (examType == ExamType.MIDTERM) "Giữa kỳ" else "Cuối kỳ")
+                    }
+                    androidx.compose.material3.DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        androidx.compose.material3.DropdownMenuItem(text = { Text(stringResource(R.string.str_gi___a_k)) }, onClick = { examType = ExamType.MIDTERM; expanded = false })
+                        androidx.compose.material3.DropdownMenuItem(text = { Text(stringResource(R.string.str_cu___i_k)) }, onClick = { examType = ExamType.FINAL; expanded = false })
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                if (exam.id != -1L) {
+                    TextButton(onClick = onDelete, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                        Text(stringResource(R.string.str_x__a))
+                    }
+                    Spacer(Modifier.weight(1f))
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.str_h___y))
+                }
+                androidx.compose.material3.Button(onClick = {
+                    val startM = startTime.split(":").let { it.getOrNull(0)?.toIntOrNull()?.times(60)?.plus(it.getOrNull(1)?.toIntOrNull() ?: 0) } ?: exam.startMinutes
+                    val durM = duration.toIntOrNull() ?: exam.durationMinutes
+                    onSave(subjectName, room, dateStr, startM, durM, examType)
+                }) {
+                    Text(stringResource(R.string.str_l__u))
+                }
+            }
+        }
+    }
+}
+
+
+
+

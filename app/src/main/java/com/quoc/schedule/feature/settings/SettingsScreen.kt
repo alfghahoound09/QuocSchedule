@@ -8,9 +8,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.quoc.schedule.R
 import com.quoc.schedule.core.data.prefs.ThemeMode
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -29,10 +31,10 @@ fun SettingsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Cài đặt") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.settings_back))
                     }
                 }
             )
@@ -45,10 +47,10 @@ fun SettingsScreen(
             // ── Học kỳ ──
             Card(shape = RoundedCornerShape(18.dp)) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Học kỳ", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_semester), style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Ngày bắt đầu tuần 1 — dùng để tính số tuần và lọc lịch theo weekPattern.",
+                        stringResource(R.string.settings_semester_desc),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -58,23 +60,23 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            state.semesterStartDate?.format(formatter) ?: "Chưa đặt",
+                            state.semesterStartDate?.format(formatter) ?: stringResource(R.string.settings_not_set),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.weight(1f)
                         )
                         Button(onClick = { showDatePicker = true }, shape = RoundedCornerShape(14.dp)) {
-                            Text("Chọn ngày")
+                            Text(stringResource(R.string.settings_pick_date))
                         }
                         if (state.semesterStartDate != null) {
                             Spacer(Modifier.width(8.dp))
-                            TextButton(onClick = { viewModel.setSemesterStart(null) }) { Text("Xóa") }
+                            TextButton(onClick = { viewModel.setSemesterStart(null) }) { Text(stringResource(R.string.settings_clear)) }
                         }
                     }
                     state.currentWeek?.let {
                         Spacer(Modifier.height(8.dp))
                         Surface(shape = RoundedCornerShape(999.dp),
                             color = MaterialTheme.colorScheme.primaryContainer) {
-                            Text("Hiện tại là tuần $it",
+                            Text(stringResource(R.string.settings_current_week, it),
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
                                 style = MaterialTheme.typography.labelSmall)
                         }
@@ -85,7 +87,7 @@ fun SettingsScreen(
             // ── Giao diện ──
             Card(shape = RoundedCornerShape(18.dp)) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Giao diện", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(12.dp))
                     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                         ThemeMode.entries.forEachIndexed { i, mode ->
@@ -95,9 +97,32 @@ fun SettingsScreen(
                                 shape = SegmentedButtonDefaults.itemShape(i, ThemeMode.entries.size)
                             ) {
                                 Text(when (mode) {
-                                    ThemeMode.SYSTEM -> "Hệ thống"
-                                    ThemeMode.LIGHT -> "Sáng"
-                                    ThemeMode.DARK -> "Tối"
+                                    ThemeMode.SYSTEM -> stringResource(R.string.settings_theme_system)
+                                    ThemeMode.LIGHT -> stringResource(R.string.settings_theme_light)
+                                    ThemeMode.DARK -> stringResource(R.string.settings_theme_dark)
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Ngôn ngữ ──
+            Card(shape = RoundedCornerShape(18.dp)) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(12.dp))
+                    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                        com.quoc.schedule.core.data.prefs.AppLanguage.entries.forEachIndexed { i, lang ->
+                            SegmentedButton(
+                                selected = state.language == lang,
+                                onClick = { viewModel.setLanguage(lang) },
+                                shape = SegmentedButtonDefaults.itemShape(i, com.quoc.schedule.core.data.prefs.AppLanguage.entries.size)
+                            ) {
+                                Text(when (lang) {
+                                    com.quoc.schedule.core.data.prefs.AppLanguage.SYSTEM -> stringResource(R.string.settings_theme_system)
+                                    com.quoc.schedule.core.data.prefs.AppLanguage.VI -> stringResource(R.string.settings_lang_vi)
+                                    com.quoc.schedule.core.data.prefs.AppLanguage.EN -> stringResource(R.string.settings_lang_en)
                                 })
                             }
                         }
@@ -112,9 +137,9 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Tự động nhảy về Hôm nay", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.settings_jump_today), style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "Mở app và xem ngày hiện tại ngay lập tức.",
+                            stringResource(R.string.settings_jump_today_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -128,7 +153,7 @@ fun SettingsScreen(
 
             Card(shape = RoundedCornerShape(18.dp)) {
                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text("Xuất & đồng bộ", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_export_sync), style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { /* placeholder */ }, modifier = Modifier.weight(1f)) {
@@ -143,7 +168,7 @@ fun SettingsScreen(
 
             Spacer(Modifier.weight(1f))
             Text(
-                "QuocSchedule 0.2.0 · dữ liệu lưu trên máy bạn",
+                stringResource(R.string.settings_footer),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -167,10 +192,10 @@ fun SettingsScreen(
                         )
                     }
                     showDatePicker = false
-                }) { Text("Chọn") }
+                }) { Text(stringResource(R.string.settings_select)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Hủy") }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.settings_cancel)) }
             }
         ) {
             DatePicker(state = datePickerState)

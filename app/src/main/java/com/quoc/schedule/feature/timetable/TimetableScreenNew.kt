@@ -8,7 +8,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +26,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import com.quoc.schedule.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -29,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.quoc.schedule.domain.TimetableEntry
 import com.quoc.schedule.ui.theme.subjectCardColor
@@ -70,8 +77,8 @@ fun TimetableScreenNew(
                     expanded = showFabMenu,
                     onDismissRequest = { showFabMenu = false }
                 ) {
-                    DropdownMenuItem(text = { Text("Nhập từ ảnh/web") }, onClick = { showFabMenu = false; onNavigateToImport() })
-                    DropdownMenuItem(text = { Text("Thêm thủ công") }, onClick = { 
+                    DropdownMenuItem(text = { Text(stringResource(R.string.str_nh___p_t_______nh_web)) }, onClick = { showFabMenu = false; onNavigateToImport() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.str_th__m_th____c__ng)) }, onClick = { 
                         showFabMenu = false
                         editingEntry = TimetableEntry(
                             sessionId = -1,
@@ -89,7 +96,7 @@ fun TimetableScreenNew(
                     onClick = { showFabMenu = true },
                     shape = RoundedCornerShape(16.dp),
                     containerColor = MaterialTheme.colorScheme.primary
-                ) { Icon(Icons.Default.Add, contentDescription = "Thêm lịch") }
+                ) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.str_th__m_l___ch)) }
             }
         },
         bottomBar = {
@@ -97,7 +104,6 @@ fun TimetableScreenNew(
         }
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            TopTabsNew(selected = 0, onSelect = { if (it == 1) onNavigateToExams() })
             WeekHeaderNew(
                 weekStart = state.weekStart,
                 weekNumber = state.weekNumber,
@@ -138,7 +144,7 @@ fun TimetableScreenNew(
     conflictDialog?.let { (entry, conflicts, target) ->
         AlertDialog(
             onDismissRequest = { conflictDialog = null },
-            title = { Text("Trùng lịch học ⚠️") },
+            title = { Text(stringResource(R.string.str_tr__ng_l___ch_h___c)) },
             text = {
                 Column {
                     Text("Buổi này sẽ trùng giờ với ${conflicts.size} môn khác:", style = MaterialTheme.typography.bodyMedium)
@@ -156,9 +162,9 @@ fun TimetableScreenNew(
                 TextButton(onClick = {
                     viewModel.applyMove(entry.sessionId, state.weekStart.plusDays(target.dayIdx.toLong()), target.startMinutes)
                     conflictDialog = null
-                }) { Text("Vẫn chuyển") }
+                }) { Text(stringResource(R.string.str_v___n_chuy___n)) }
             },
-            dismissButton = { TextButton(onClick = { conflictDialog = null }) { Text("Hủy") } }
+            dismissButton = { TextButton(onClick = { conflictDialog = null }) { Text(stringResource(R.string.str_h___y)) } }
         )
     }
 
@@ -465,14 +471,14 @@ fun ClassCardNew(
                 )
                 if (entry.isMakeup) {
                     Spacer(Modifier.width(4.dp))
-                    Text("bù", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.str_b), fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             if (height > 56.dp) {
                 Text(entry.subject.name, fontSize = 8.5.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 10.sp)
             }
             if (entry.isCancelled) {
-                Text("Đã hủy", fontSize = 8.sp, color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.str_h___y), fontSize = 8.sp, color = MaterialTheme.colorScheme.error)
             } else {
                 entry.room?.let { Text(it, fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
@@ -488,13 +494,13 @@ fun ScheduleBottomBarNew(
     onSettings: () -> Unit
 ) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface) {
-        NavigationBarItem(selected = selected == 0, onClick = {}, icon = { Text("🏠", fontSize = 16.sp) }, label = { Text("Lịch", fontSize = 10.sp) },
+        NavigationBarItem(selected = selected == 0, onClick = {}, icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) }, label = { Text(stringResource(R.string.tab_timetable), fontSize = 10.sp) },
             colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
-        NavigationBarItem(selected = selected == 1, onClick = onExams, icon = { Text("📝", fontSize = 16.sp) }, label = { Text("Thi", fontSize = 10.sp) },
+        NavigationBarItem(selected = selected == 1, onClick = onExams, icon = { Icon(Icons.AutoMirrored.Filled.EventNote, contentDescription = null) }, label = { Text(stringResource(R.string.tab_exams), fontSize = 10.sp) },
             colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
-        NavigationBarItem(selected = selected == 2, onClick = onStats, icon = { Text("📊", fontSize = 16.sp) }, label = { Text("Thống kê", fontSize = 10.sp) },
+        NavigationBarItem(selected = selected == 2, onClick = onStats, icon = { Icon(Icons.Outlined.BarChart, contentDescription = null) }, label = { Text(stringResource(R.string.tab_stats), fontSize = 10.sp) },
             colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
-        NavigationBarItem(selected = selected == 3, onClick = onSettings, icon = { Text("⚙️", fontSize = 16.sp) }, label = { Text("Cài đặt", fontSize = 10.sp) },
+        NavigationBarItem(selected = selected == 3, onClick = onSettings, icon = { Icon(Icons.Default.Settings, contentDescription = null) }, label = { Text(stringResource(R.string.tab_settings), fontSize = 10.sp) },
             colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
     }
 }
@@ -521,13 +527,13 @@ fun EditEntrySheet(
                 .padding(bottom = 32.dp)
                 .fillMaxWidth()
         ) {
-            Text("Chỉnh sửa môn học", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.str_ch___nh_s___a_m__n_h_), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Tên môn học") },
+                label = { Text(stringResource(R.string.str_t__n_m__n_h___c)) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
@@ -535,7 +541,7 @@ fun EditEntrySheet(
             OutlinedTextField(
                 value = room,
                 onValueChange = { room = it },
-                label = { Text("Phòng học") },
+                label = { Text(stringResource(R.string.str_ph__ng_h___c)) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
@@ -544,19 +550,19 @@ fun EditEntrySheet(
                 OutlinedTextField(
                     value = day.toString(),
                     onValueChange = { day = it.toIntOrNull() ?: day },
-                    label = { Text("Thứ (2-8)") },
+                    label = { Text(stringResource(R.string.str_th_____2_8)) },
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = startTime,
                     onValueChange = { startTime = it },
-                    label = { Text("Bắt đầu (HH:mm)") },
+                    label = { Text(stringResource(R.string.str_b___t______u__hh_mm)) },
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = endTime,
                     onValueChange = { endTime = it },
-                    label = { Text("Kết thúc") },
+                    label = { Text(stringResource(R.string.str_k___t_th__c)) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -564,20 +570,22 @@ fun EditEntrySheet(
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onDelete, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
-                    Text("Xóa")
+                    Text(stringResource(R.string.str_x__a))
                 }
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = onDismiss) {
-                    Text("Hủy")
+                    Text(stringResource(R.string.str_h___y))
                 }
                 Button(onClick = {
                     val startM = startTime.split(":").let { it.getOrNull(0)?.toIntOrNull()?.times(60)?.plus(it.getOrNull(1)?.toIntOrNull() ?: 0) } ?: entry.startMinutes
                     val endM = endTime.split(":").let { it.getOrNull(0)?.toIntOrNull()?.times(60)?.plus(it.getOrNull(1)?.toIntOrNull() ?: 0) } ?: entry.endMinutes
                     onSave(name, room, day, startM, endM)
                 }) {
-                    Text("Lưu")
+                    Text(stringResource(R.string.str_l__u))
                 }
             }
         }
     }
 }
+
+

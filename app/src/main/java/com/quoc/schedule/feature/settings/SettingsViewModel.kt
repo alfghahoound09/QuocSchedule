@@ -2,6 +2,7 @@ package com.quoc.schedule.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.quoc.schedule.core.data.prefs.AppLanguage
 import com.quoc.schedule.core.data.prefs.ThemeMode
 import com.quoc.schedule.core.data.prefs.UserPrefsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,6 +18,7 @@ import javax.inject.Inject
 data class SettingsUiState(
     val semesterStartDate: LocalDate? = null,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val language: AppLanguage = AppLanguage.SYSTEM,
     val currentWeek: Int? = null
 )
 
@@ -36,6 +38,7 @@ class SettingsViewModel @Inject constructor(
                     it.copy(
                         semesterStartDate = prefs.semesterStartDate,
                         themeMode = prefs.themeMode,
+                        language = prefs.language,
                         currentWeek = prefsRepository.weekNumberFor(prefs, today.with(DayOfWeek.MONDAY))
                     )
                 }
@@ -49,5 +52,9 @@ class SettingsViewModel @Inject constructor(
 
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { prefsRepository.setThemeMode(mode) }
+    }
+
+    fun setLanguage(language: AppLanguage) {
+        viewModelScope.launch { prefsRepository.setLanguage(language) }
     }
 }

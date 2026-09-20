@@ -1,4 +1,4 @@
-package com.quoc.schedule.feature.timetable
+﻿package com.quoc.schedule.feature.timetable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +21,8 @@ import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
+import com.quoc.schedule.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -72,13 +74,13 @@ fun TimetableScreen(
     }
     val haptics = LocalHapticFeedback.current
 
-    // Trạng thái drag + dialog conflict (giữ target vì drag state reset khi thả)
+    // Tráº¡ng thÃ¡i drag + dialog conflict (giá»¯ target vÃ¬ drag state reset khi tháº£)
     val drag = remember { DragState() }
     var conflictDialog by remember {
         mutableStateOf<Triple<TimetableEntry, List<TimetableEntry>, DropTarget>?>(null)
     }
 
-    var viewMode by remember { mutableStateOf("Hôm nay") }
+    var viewMode by remember { mutableStateOf("HÃ´m nay") }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -87,7 +89,7 @@ fun TimetableScreen(
                 onClick = onNavigateToImport,
                 shape = RoundedCornerShape(18.dp),
                 containerColor = MaterialTheme.colorScheme.primary
-            ) { Icon(Icons.Default.Add, contentDescription = "Thêm lịch") }
+            ) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.str_th__m_l___ch)) }
         },
         bottomBar = {
             ScheduleBottomBar(
@@ -121,7 +123,7 @@ fun TimetableScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                if (viewMode == "Hôm nay") {
+                if (viewMode == "HÃ´m nay") {
                     TimelineView(
                         entries = state.entries,
                         weekStart = state.weekStart,
@@ -156,22 +158,22 @@ fun TimetableScreen(
         }
     }
 
-    // Dialog conflict khi thả vào ô đã có môn
+    // Dialog conflict khi tháº£ vÃ o Ã´ Ä‘Ã£ cÃ³ mÃ´n
     conflictDialog?.let { (entry, conflicts, target) ->
         AlertDialog(
             onDismissRequest = { conflictDialog = null },
-            title = { Text("Trùng lịch học ⚠️") },
+            title = { Text(stringResource(R.string.str_tr__ng_l___ch_h___c)) },
             text = {
                 Column {
                     Text(
-                        "Buổi này sẽ trùng giờ với ${conflicts.size} môn khác:",
+                        "Buá»•i nÃ y sáº½ trÃ¹ng giá» vá»›i ${conflicts.size} mÃ´n khÃ¡c:",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(Modifier.height(6.dp))
                     conflicts.forEach { c ->
                         Text(
-                            "• ${c.subject.name} (" +
-                                    "%02d:%02d–%02d:%02d".format(
+                            "â€¢ ${c.subject.name} (" +
+                                    "%02d:%02dâ€“%02d:%02d".format(
                                         c.startMinutes / 60, c.startMinutes % 60,
                                         c.endMinutes / 60, c.endMinutes % 60
                                     ) + ")",
@@ -189,10 +191,10 @@ fun TimetableScreen(
                         target.startMinutes
                     )
                     conflictDialog = null
-                }) { Text("Vẫn chuyển") }
+                }) { Text(stringResource(R.string.str_v___n_chuy___n)) }
             },
             dismissButton = {
-                TextButton(onClick = { conflictDialog = null }) { Text("Hủy") }
+                TextButton(onClick = { conflictDialog = null }) { Text(stringResource(R.string.str_h___y)) }
             }
         )
     }
@@ -224,7 +226,7 @@ fun WeekHeader(
         ) {
             TextButton(onClick = onPrev, contentPadding = PaddingValues(0.dp)) {
                 Text(
-                    "‹ Tuần ${if (weekKnown) (weekNumber - 1).coerceAtLeast(1) else "trước"}",
+                    "â€¹ Tuáº§n ${if (weekKnown) (weekNumber - 1).coerceAtLeast(1) else "trÆ°á»›c"}",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.labelMedium
                 )
@@ -234,14 +236,14 @@ fun WeekHeader(
                 modifier = Modifier.clickable(onClick = onToday)
             ) {
                 Text(
-                    "${weekStart.format(formatter)} – ${weekStart.plusDays(6).format(formatter)} / " +
+                    "${weekStart.format(formatter)} â€“ ${weekStart.plusDays(6).format(formatter)} / " +
                             "%02d / %d".format(weekStart.monthValue, weekStart.year),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    if (weekKnown) "Tuần $weekNumber · chạm để về hôm nay"
-                    else "chạm để về hôm nay",
+                    if (weekKnown) "Tuáº§n $weekNumber Â· cháº¡m Ä‘á»ƒ vá» hÃ´m nay"
+                    else "cháº¡m Ä‘á»ƒ vá» hÃ´m nay",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -249,13 +251,13 @@ fun WeekHeader(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onNext, contentPadding = PaddingValues(0.dp)) {
                     Text(
-                        "Tuần ${if (weekKnown) weekNumber + 1 else "sau"} ›",
+                        "Tuáº§n ${if (weekKnown) weekNumber + 1 else "sau"} â€º",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
                 IconButton(onClick = onToggleTheme, modifier = Modifier.size(32.dp)) {
-                    Text(text = if (isDark) "☀️" else "🌙", fontSize = 16.sp)
+                    Text(text = if (isDark) "â˜€ï¸" else "ðŸŒ™", fontSize = 16.sp)
                 }
             }
         }
@@ -263,7 +265,7 @@ fun WeekHeader(
         Spacer(Modifier.height(8.dp))
         
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            val modes = listOf("Hôm nay", "Cả tuần")
+            val modes = listOf("HÃ´m nay", "Cáº£ tuáº§n")
             modes.forEach { mode ->
                 val active = viewMode == mode
                 Surface(
@@ -305,7 +307,7 @@ private fun WeekGrid(
     val gridWidth = TIME_COLUMN_WIDTH_DP + DAY_COLUMN_WIDTH_DP * 7
 
     Column(Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = 8.dp)) {
-        // ── Day Strip Header (FIXED) — Shows date + today highlight ──
+        // â”€â”€ Day Strip Header (FIXED) â€” Shows date + today highlight â”€â”€
         Row(
             modifier = Modifier
                 .horizontalScroll(horizontalScrollState)
@@ -361,7 +363,7 @@ private fun WeekGrid(
                 ((currentMinutes - DAY_START_MINUTES).toFloat() / 60f) * SLOT_HEIGHT_DP
             } else 0f
 
-            // lưới nền + cột giờ
+            // lÆ°á»›i ná»n + cá»™t giá»
             Row {
                 Column(Modifier.width(TIME_COLUMN_WIDTH_DP.dp)) {
                     for (slot in 0..totalSlots) {
@@ -426,7 +428,7 @@ private fun WeekGrid(
                 }
             }
 
-            // các card môn học (không tính card đang kéo)
+            // cÃ¡c card mÃ´n há»c (khÃ´ng tÃ­nh card Ä‘ang kÃ©o)
             Row(Modifier.fillMaxSize()) {
                 Spacer(Modifier.width(TIME_COLUMN_WIDTH_DP.dp))
                 for (dayIdx in 0..6) {
@@ -474,7 +476,7 @@ private fun WeekGrid(
                                     },
                                     onDrag = { delta ->
                                         drag.offset += delta
-                                        // tính ô đích (snap 30')
+                                        // tÃ­nh Ã´ Ä‘Ã­ch (snap 30')
                                         val dayW = drag.columnWidthPx
                                         if (dayW > 0) {
                                             val x = dayIdx * dayW + drag.offset.x + dayW / 2
@@ -516,7 +518,7 @@ private fun WeekGrid(
                 }
             }
 
-            // card đang kéo — nổi lên trên, scale nhẹ
+            // card Ä‘ang kÃ©o â€” ná»•i lÃªn trÃªn, scale nháº¹
             drag.entry?.let { entry ->
                 val duration = (entry.endMinutes - entry.startMinutes).coerceAtLeast(45)
                 val cardHeight = (duration * SLOT_HEIGHT_DP / 60f).coerceAtLeast(40f).dp
@@ -536,7 +538,7 @@ private fun WeekGrid(
                 }
             }
         }
-        Spacer(Modifier.height(100.dp)) // chừa chỗ cho FAB + bottom bar
+        Spacer(Modifier.height(100.dp)) // chá»«a chá»— cho FAB + bottom bar
     }
 }
 }
@@ -594,7 +596,7 @@ fun ClassCard(
                         modifier = Modifier.weight(1f)
                     )
                     if (entry.isMakeup) {
-                        Text("bù", fontSize = 7.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.str_b), fontSize = 7.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -614,7 +616,7 @@ fun ClassCard(
 
                 // Room or status (PROMINENT at bottom)
                 if (entry.isCancelled) {
-                    Text("Đã hủy", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.str_h___y), fontSize = 8.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                 } else {
                     entry.room?.let {
                         Text(
@@ -657,7 +659,7 @@ private fun TimelineView(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                "Thứ ${dayIdx + 2} - Hôm nay, ${today.dayOfMonth}/${today.monthValue}",
+                "Thá»© ${dayIdx + 2} - HÃ´m nay, ${today.dayOfMonth}/${today.monthValue}",
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
@@ -676,7 +678,7 @@ private fun TimelineView(
                 ((currentMinutes - DAY_START_MINUTES).toFloat() / 60f) * SLOT_HEIGHT_DP
             } else 0f
 
-            // lưới nền + cột giờ
+            // lÆ°á»›i ná»n + cá»™t giá»
             Row {
                 Column(Modifier.width(TIME_COLUMN_WIDTH_DP.dp)) {
                     for (slot in 0..totalSlots) {
@@ -790,19 +792,19 @@ fun ScheduleBottomBar(
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         NavigationBarItem(
             selected = selected == 0, onClick = onTimetable,
-            icon = { Icon(Icons.Default.CalendarMonth, null) }, label = { Text("Lịch") }
+            icon = { Icon(Icons.Default.CalendarMonth, null) }, label = { Text(stringResource(R.string.str_l___ch)) }
         )
         NavigationBarItem(
             selected = selected == 1, onClick = onExams,
-            icon = { Icon(Icons.Default.EventNote, null) }, label = { Text("Thi") }
+            icon = { Icon(Icons.Default.EventNote, null) }, label = { Text(stringResource(R.string.str_thi)) }
         )
         NavigationBarItem(
             selected = selected == 2, onClick = onStats,
-            icon = { Icon(Icons.Outlined.BarChart, null) }, label = { Text("Thống kê") }
+            icon = { Icon(Icons.Outlined.BarChart, null) }, label = { Text(stringResource(R.string.str_th___ng_k)) }
         )
         NavigationBarItem(
             selected = selected == 3, onClick = onSettings,
-            icon = { Icon(Icons.Default.Settings, null) }, label = { Text("Cài đặt") }
+            icon = { Icon(Icons.Default.Settings, null) }, label = { Text(stringResource(R.string.str_c__i______t)) }
         )
     }
 }

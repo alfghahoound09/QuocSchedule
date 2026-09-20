@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
+import com.quoc.schedule.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -91,7 +93,7 @@ fun ChooseSourceScreen(
     onCancel: () -> Unit
 ) {
     Column(Modifier.fillMaxSize().padding(20.dp)) {
-        Text("Thêm lịch mới ✨", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.str_th__m_l___ch_m___i), style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(4.dp))
         Text(
             "Chọn nguồn dữ liệu — app sẽ tự đọc và bạn luôn được kiểm tra trước khi lưu.",
@@ -104,7 +106,7 @@ fun ChooseSourceScreen(
         SourceOption("📷", "Chụp ảnh trực tiếp", "Chụp bảng lịch giấy / màn hình", ColorPeach.copy(alpha = .5f), onOpenCamera)
         SourceOption("✏️", "Nhập thủ công", "Tự điền tên môn, giờ học, phòng", BeigeAccent.copy(alpha = .6f), onCancel)
         Spacer(Modifier.weight(1f))
-        TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text("‹ Quay lại") }
+        TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.str_quay_l___i)) }
     }
 }
 
@@ -137,10 +139,10 @@ fun ScanningScreen(step: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("🔍", fontSize = 48.sp)
+        Text(stringResource(R.string.str_unknown), fontSize = 48.sp)
         Spacer(Modifier.height(16.dp))
-        Text("Đang đọc lịch của bạn…", style = MaterialTheme.typography.headlineSmall)
-        Text("Giữ yên một chút nhé ☕", style = MaterialTheme.typography.bodyMedium,
+        Text(stringResource(R.string.str_ang______c_l___ch_c__), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.str_gi____y__n_m___t_ch__), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(28.dp))
         LinearProgressIndicator(modifier = Modifier.fillMaxWidth(0.6f))
@@ -162,7 +164,7 @@ fun PreviewScreen(
 
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
-            Text("Kiểm tra dữ liệu 🧐", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.str_ki___m_tra_d____li___), style = MaterialTheme.typography.headlineSmall)
             Text(
                 "Đọc được ${entries.size} mục. Các trường tô vàng cần bạn xác nhận.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -194,7 +196,7 @@ fun PreviewScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) { Text("✓ Xác nhận & lưu ${entries.size} mục", fontWeight = FontWeight.Bold) }
                 TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                    Text("Hủy", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.str_h___y), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -223,7 +225,7 @@ fun EntryCard(
                     modifier = Modifier.weight(1f))
                 if (lowConfidence) {
                     Surface(shape = RoundedCornerShape(999.dp), color = Color(0xFFFCF3E3)) {
-                        Text("⚠ cần kiểm tra", modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        Text(stringResource(R.string.str_c___n_ki___m_tra), modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             fontSize = 10.sp, color = Color(0xFFC77E2C), fontWeight = FontWeight.Bold)
                     }
                 }
@@ -276,24 +278,24 @@ fun EditForm(entry: ParsedEntry, onSave: (ParsedEntry) -> Unit, onRemove: () -> 
     var room by remember { mutableStateOf(entry.room ?: "") }
     var lecturer by remember { mutableStateOf(entry.lecturer ?: "") }
 
-    OutlinedTextField(name, { name = it }, label = { Text("Tên môn") },
+    OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.str_t__n_m__n)) },
         modifier = Modifier.fillMaxWidth(), singleLine = true)
     Spacer(Modifier.height(6.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        OutlinedTextField(code, { code = it }, label = { Text("Mã HP") },
+        OutlinedTextField(code, { code = it }, label = { Text(stringResource(R.string.str_m___hp)) },
             modifier = Modifier.weight(1f), singleLine = true)
-        OutlinedTextField(room, { room = it }, label = { Text("Phòng") },
+        OutlinedTextField(room, { room = it }, label = { Text(stringResource(R.string.str_ph__ng)) },
             modifier = Modifier.weight(1f), singleLine = true)
     }
     Spacer(Modifier.height(6.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        OutlinedTextField(start, { start = it }, label = { Text("Bắt đầu (7:30)") },
+        OutlinedTextField(start, { start = it }, label = { Text(stringResource(R.string.str_b___t______u__7_30)) },
             modifier = Modifier.weight(1f), singleLine = true)
-        OutlinedTextField(end, { end = it }, label = { Text("Kết thúc (9:30)") },
+        OutlinedTextField(end, { end = it }, label = { Text(stringResource(R.string.str_k___t_th__c__9_30)) },
             modifier = Modifier.weight(1f), singleLine = true)
     }
     Spacer(Modifier.height(6.dp))
-    OutlinedTextField(lecturer, { lecturer = it }, label = { Text("Giảng viên") },
+    OutlinedTextField(lecturer, { lecturer = it }, label = { Text(stringResource(R.string.str_gi___ng_vi__n)) },
         modifier = Modifier.fillMaxWidth(), singleLine = true)
     Spacer(Modifier.height(10.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -312,9 +314,9 @@ fun EditForm(entry: ParsedEntry, onSave: (ParsedEntry) -> Unit, onRemove: () -> 
             },
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(14.dp)
-        ) { Text("Lưu thay đổi") }
+        ) { Text(stringResource(R.string.str_l__u_thay______i)) }
         OutlinedButton(onClick = onRemove, shape = RoundedCornerShape(14.dp)) {
-            Text("Xóa", color = MaterialTheme.colorScheme.error)
+            Text(stringResource(R.string.str_x__a), color = MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -354,3 +356,6 @@ private fun formatTime(entry: ParsedEntry): String {
     val date = entry.date
     return listOfNotNull(day, time.ifBlank { null }, date).joinToString(" · ").ifBlank { "—" }
 }
+
+
+

@@ -1,4 +1,4 @@
-package com.quoc.schedule.feature.camera
+﻿package com.quoc.schedule.feature.camera
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.quoc.schedule.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,8 +32,8 @@ import androidx.core.content.ContextCompat
 import java.io.File
 
 /**
- * Màn chụp ảnh trực tiếp — ảnh chụp xong đưa vào ImportViewModel.importImage().
- * Ảnh lưu trong cacheDir của app, không cần MediaStore.
+ * MÃ n chá»¥p áº£nh trá»±c tiáº¿p â€” áº£nh chá»¥p xong Ä‘Æ°a vÃ o ImportViewModel.importImage().
+ * áº¢nh lÆ°u trong cacheDir cá»§a app, khÃ´ng cáº§n MediaStore.
  */
 @Composable
 fun CameraScreen(
@@ -53,8 +55,8 @@ fun CameraScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        permissionRefresh++          // trigger recompose sau khi user trả lời
-        if (!granted) errorText = "Cần quyền camera để chụp ảnh lịch."
+        permissionRefresh++          // trigger recompose sau khi user tráº£ lá»i
+        if (!granted) errorText = "Cáº§n quyá»n camera Ä‘á»ƒ chá»¥p áº£nh lá»‹ch."
     }
 
     LaunchedEffect(Unit) {
@@ -93,25 +95,25 @@ fun CameraScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("📷", fontSize = 44.sp)
+                Text(stringResource(R.string.str_unknown), fontSize = 44.sp)
                 Spacer(Modifier.height(10.dp))
-                Text("Cần quyền truy cập camera", color = Color.White,
+                Text(stringResource(R.string.str_c___n_quy___n_truy_c_), color = Color.White,
                     style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(14.dp))
                 Button(
                     onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
                     shape = RoundedCornerShape(14.dp)
-                ) { Text("Cấp quyền") }
+                ) { Text(stringResource(R.string.str_c___p_quy___n)) }
             }
         }
 
-        // Thanh dưới: hủy + nút chụp
+        // Thanh dÆ°á»›i: há»§y + nÃºt chá»¥p
         Row(
             Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(28.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                Text("Hủy", color = Color.White.copy(alpha = 0.8f))
+                Text(stringResource(R.string.str_h___y), color = Color.White.copy(alpha = 0.8f))
             }
             Box(
                 Modifier.size(74.dp).background(Color.White.copy(alpha = 0.25f), CircleShape),
@@ -121,7 +123,7 @@ fun CameraScreen(
                     onClick = {
                         val capture = imageCapture
                         if (capture == null) {
-                            errorText = "Camera chưa sẵn sàng"
+                            errorText = "Camera chÆ°a sáºµn sÃ ng"
                             return@Button
                         }
                         capturing = true
@@ -137,7 +139,7 @@ fun CameraScreen(
                                 }
                                 override fun onError(e: ImageCaptureException) {
                                     capturing = false
-                                    errorText = "Chụp ảnh thất bại: ${e.message}"
+                                    errorText = "Chá»¥p áº£nh tháº¥t báº¡i: ${e.message}"
                                 }
                             }
                         )
@@ -147,7 +149,7 @@ fun CameraScreen(
                     enabled = !capturing && hasPermission,
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text(if (capturing) "⏳" else "◉", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(if (capturing) "â³" else "â—‰", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(Modifier.weight(1f))
@@ -157,9 +159,9 @@ fun CameraScreen(
     errorText?.let { msg ->
         AlertDialog(
             onDismissRequest = { errorText = null },
-            title = { Text("Có vấn đề") },
+            title = { Text(stringResource(R.string.str_c___v___n)) },
             text = { Text(msg) },
-            confirmButton = { TextButton(onClick = { errorText = null }) { Text("Đã hiểu") } }
+            confirmButton = { TextButton(onClick = { errorText = null }) { Text(stringResource(R.string.str_hi___u)) } }
         )
     }
 }

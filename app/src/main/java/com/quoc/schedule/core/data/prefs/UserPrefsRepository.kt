@@ -16,11 +16,13 @@ import javax.inject.Singleton
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
+enum class AppLanguage(val tag: String) { SYSTEM(""), VI("vi"), EN("en") }
 
 data class UserPrefs(
     /** Ngày thứ Hai của tuần 1 học kỳ — dùng để tính weekNumber. Null = chưa cấu hình. */
     val semesterStartDate: LocalDate? = null,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val language: AppLanguage = AppLanguage.SYSTEM
 )
 
 @Singleton
@@ -29,6 +31,7 @@ class UserPrefsRepository @Inject constructor(
 ) {
     private val semesterStartKey = stringPreferencesKey("semester_start_date")
     private val themeModeKey = stringPreferencesKey("theme_mode")
+    private val languageKey = stringPreferencesKey("language")
 
     val prefs: Flow<UserPrefs> = context.dataStore.data.map { p ->
         UserPrefs(
@@ -37,7 +40,10 @@ class UserPrefsRepository @Inject constructor(
             },
             themeMode = p[themeModeKey]?.let {
                 runCatching { ThemeMode.valueOf(it) }.getOrDefault(ThemeMode.SYSTEM)
-            } ?: ThemeMode.SYSTEM
+            } ?: ThemeMode.SYSTEM,
+            language = p[languageKey]?.let {
+                runCatching { AppLanguage.valueOf(it) }.getOrDefault(AppLanguage.SYSTEM)
+            } ?: AppLanguage.SYSTEM
         )
     }
 
@@ -50,6 +56,10 @@ class UserPrefsRepository @Inject constructor(
 
     suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { it[themeModeKey] = mode.name }
+    }
+
+    suspend fun setLanguage(language: AppLanguage) {
+        context.dataStore.edit { it[languageKey] = language.name }
     }
 
     /** Tuần hiện tại (1-based) theo ngày bắt đầu học kỳ; null nếu chưa cấu hình. */

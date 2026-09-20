@@ -1,4 +1,4 @@
-package com.quoc.schedule.ui.components
+﻿package com.quoc.schedule.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.quoc.schedule.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -123,7 +125,7 @@ fun SmartScheduleCard(
                     ) {
                         Icon(
                             Icons.Default.MoreVert,
-                            contentDescription = "Menu",
+                            contentDescription = stringResource(R.string.str_menu),
                             tint = LightColors.textSecondary
                         )
                     }
@@ -178,10 +180,10 @@ fun SmartScheduleCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("⏰", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.str_unknown), style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.width(Spacing.xs))
                     Text(
-                        text = "${formatMinutes(session.startMinutes)} – ${formatMinutes(session.endMinutes)}",
+                        text = "${formatMinutes(session.startMinutes)} â€“ ${formatMinutes(session.endMinutes)}",
                         style = MaterialTheme.typography.labelLarge,
                         color = LightColors.textPrimary,
                         fontWeight = FontWeight.Medium
@@ -191,7 +193,7 @@ fun SmartScheduleCard(
                 Spacer(modifier = Modifier.height(Spacing.xs))
 
                 // Room tag
-                RoomTag(room = session.room ?: "Chưa rõ")
+                RoomTag(room = session.room ?: "ChÆ°a rÃµ")
             }
         }
     }
@@ -217,7 +219,7 @@ fun LiveBadge(alpha: Float = 1f) {
             )
             Spacer(modifier = Modifier.width(Spacing.xs))
             Text(
-                text = "Đang học",
+                text = "Äang há»c",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = SemanticColors.liveGreen
@@ -237,7 +239,7 @@ fun CancelledBadge() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "✗ Nghỉ",
+                text = "âœ— Nghá»‰",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = SemanticColors.urgentRed
@@ -257,7 +259,7 @@ fun ConflictBadge() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "⚠ Trùng",
+                text = "âš  TrÃ¹ng",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = SemanticColors.conflictOrange
@@ -277,7 +279,7 @@ fun RoomTag(room: String) {
             modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("📍", style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.str_unknown), style = MaterialTheme.typography.labelMedium)
             Spacer(modifier = Modifier.width(Spacing.xs))
             Text(
                 text = room,
@@ -300,16 +302,16 @@ fun formatMinutes(minutes: Int): String {
 fun getSubjectEmoji(code: String): String {
     return when {
         code.startsWith("IT", ignoreCase = true) ||
-        code.startsWith("INT", ignoreCase = true) -> "💻"
+        code.startsWith("INT", ignoreCase = true) -> "ðŸ’»"
         code.startsWith("MI", ignoreCase = true) ||
-        code.startsWith("MA", ignoreCase = true) -> "🧮"
-        code.startsWith("PH", ignoreCase = true) -> "⚛️"
-        code.startsWith("CH", ignoreCase = true) -> "🧪"
+        code.startsWith("MA", ignoreCase = true) -> "ðŸ§®"
+        code.startsWith("PH", ignoreCase = true) -> "âš›ï¸"
+        code.startsWith("CH", ignoreCase = true) -> "ðŸ§ª"
         code.startsWith("FL", ignoreCase = true) ||
-        code.startsWith("ENG", ignoreCase = true) -> "🗣️"
+        code.startsWith("ENG", ignoreCase = true) -> "ðŸ—£ï¸"
         code.startsWith("PE", ignoreCase = true) ||
-        code.startsWith("TC", ignoreCase = true) -> "⚽"
-        else -> "📘"
+        code.startsWith("TC", ignoreCase = true) -> "âš½"
+        else -> "ðŸ“˜"
     }
 }
 
