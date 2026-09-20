@@ -61,19 +61,19 @@ fun TimetableScreenNew(
     var conflictDialog by remember { mutableStateOf<Triple<TimetableEntry, List<TimetableEntry>, DropTarget>?>(null) }
 
     Scaffold(
-        containerColor = Color(0xFFFAFAF7),
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToImport,
                 shape = RoundedCornerShape(16.dp),
-                containerColor = Color(0xFF7FB3D9)
+                containerColor = MaterialTheme.colorScheme.primary
             ) { Icon(Icons.Default.Add, contentDescription = "Thêm lịch") }
         },
         bottomBar = {
             ScheduleBottomBarNew(selected = 0, onExams = onNavigateToExams, onStats = onNavigateToStats, onSettings = onNavigateToSettings)
         }
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().background(Color(0xFFFAFAF7))) {
+        Column(Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             TopTabsNew(selected = 0, onSelect = { if (it == 1) onNavigateToExams() })
             WeekHeaderNew(
                 weekStart = state.weekStart,
@@ -145,7 +145,7 @@ fun TopTabsNew(selected: Int, onSelect: (Int) -> Unit) {
     Surface(
         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
         shape = RoundedCornerShape(999.dp),
-        color = Color(0xFFEDEAE3)
+        color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Row(Modifier.padding(4.dp)) {
             listOf("📅 Lịch học", "📝 Lịch thi").forEachIndexed { i, label ->
@@ -153,14 +153,14 @@ fun TopTabsNew(selected: Int, onSelect: (Int) -> Unit) {
                 Surface(
                     modifier = Modifier.weight(1f).clickable { onSelect(i) },
                     shape = RoundedCornerShape(999.dp),
-                    color = if (active) Color(0xFFFFFFFF) else Color(0xFFEDEAE3)
+                    color = if (active) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Text(
                         label,
                         modifier = Modifier.padding(vertical = 9.dp),
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 13.sp),
                         fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
-                        color = if (active) Color(0xFF2E3A45) else Color(0xFF6B7B88),
+                        color = if (active) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
@@ -187,23 +187,23 @@ fun WeekHeaderNew(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         TextButton(onClick = onPrev) {
-            Text("‹ Tuần ${weekNumber-1}", color = Color(0xFF6B7B88), fontSize = 11.sp)
+            Text("‹ Tuần ${weekNumber-1}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(onClick = onToday)) {
             Text(
                 weekStart.format(formatter) + " – " + weekStart.plusDays(6).format(formatter),
                 style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF2E3A45),
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
             )
             if (weekKnown) {
-                Text("Tuần $weekNumber", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B7B88), fontSize = 11.sp)
+                Text("Tuần $weekNumber", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onNext) {
-                Text("Tuần ${weekNumber+1} ›", color = Color(0xFF6B7B88), fontSize = 11.sp)
+                Text("Tuần ${weekNumber+1} ›", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
             }
             IconButton(onClick = onToggleTheme, modifier = Modifier.size(32.dp)) {
                 Text(text = if (isDark) "☀️" else "🌙", fontSize = 16.sp)
@@ -227,12 +227,12 @@ private fun WeekGridNew(
     val density = LocalDensity.current
     val haptics = LocalHapticFeedback.current
 
-    Column(Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = 8.dp).background(Color(0xFFFAFAF7))) {
+    Column(Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = 8.dp).background(MaterialTheme.colorScheme.background)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(34.dp))
             dayLabels.forEachIndexed { _, day ->
                 Box(Modifier.weight(1f).padding(2.dp), contentAlignment = Alignment.Center) {
-                    Text(day, textAlign = androidx.compose.ui.text.style.TextAlign.Center, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color(0xFF6B7B88), fontSize = 9.sp)
+                    Text(day, textAlign = androidx.compose.ui.text.style.TextAlign.Center, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 9.sp)
                 }
             }
         }
@@ -253,7 +253,7 @@ private fun WeekGridNew(
                             modifier = Modifier.height(SLOT_HEIGHT_DP.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 8.sp,
-                            color = Color(0xFF6B7B88)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -265,7 +265,7 @@ private fun WeekGridNew(
                                 Box(
                                     Modifier.height(SLOT_HEIGHT_DP.dp).fillMaxWidth()
                                         .padding(1.dp)
-                                        .background(if (isHovered) Color(0xFF7FB3D9).copy(alpha = 0.15f) else Color(0xFFEDEAE3), RoundedCornerShape(10.dp))
+                                        .background(if (isHovered) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
                                 )
                             }
                         }
@@ -393,16 +393,16 @@ fun ClassCardNew(
                 )
                 if (entry.isMakeup) {
                     Spacer(Modifier.width(4.dp))
-                    Text("bù", fontSize = 8.sp, color = Color(0xFF6B7B88))
+                    Text("bù", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             if (height > 56.dp) {
                 Text(entry.subject.name, fontSize = 8.5.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 10.sp)
             }
             if (entry.isCancelled) {
-                Text("Đã hủy", fontSize = 8.sp, color = Color(0xFFF5B8B1))
+                Text("Đã hủy", fontSize = 8.sp, color = MaterialTheme.colorScheme.error)
             } else {
-                entry.room?.let { Text(it, fontSize = 8.sp, color = Color(0xFF6B7B88)) }
+                entry.room?.let { Text(it, fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
     }
@@ -415,14 +415,14 @@ fun ScheduleBottomBarNew(
     onStats: () -> Unit,
     onSettings: () -> Unit
 ) {
-    NavigationBar(containerColor = Color(0xFFFFFFFF), contentColor = Color(0xFF2E3A45)) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface) {
         NavigationBarItem(selected = selected == 0, onClick = {}, icon = { Text("🏠", fontSize = 16.sp) }, label = { Text("Lịch", fontSize = 10.sp) },
-            colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF5B8FB0), selectedTextColor = Color(0xFF5B8FB0), unselectedIconColor = Color(0xFF6B7B88), unselectedTextColor = Color(0xFF6B7B88)))
+            colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
         NavigationBarItem(selected = selected == 1, onClick = onExams, icon = { Text("📝", fontSize = 16.sp) }, label = { Text("Thi", fontSize = 10.sp) },
-            colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF5B8FB0), selectedTextColor = Color(0xFF5B8FB0), unselectedIconColor = Color(0xFF6B7B88), unselectedTextColor = Color(0xFF6B7B88)))
+            colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
         NavigationBarItem(selected = selected == 2, onClick = onStats, icon = { Text("📊", fontSize = 16.sp) }, label = { Text("Thống kê", fontSize = 10.sp) },
-            colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF5B8FB0), selectedTextColor = Color(0xFF5B8FB0), unselectedIconColor = Color(0xFF6B7B88), unselectedTextColor = Color(0xFF6B7B88)))
+            colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
         NavigationBarItem(selected = selected == 3, onClick = onSettings, icon = { Text("⚙️", fontSize = 16.sp) }, label = { Text("Cài đặt", fontSize = 10.sp) },
-            colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF5B8FB0), selectedTextColor = Color(0xFF5B8FB0), unselectedIconColor = Color(0xFF6B7B88), unselectedTextColor = Color(0xFF6B7B88)))
+            colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant))
     }
 }
