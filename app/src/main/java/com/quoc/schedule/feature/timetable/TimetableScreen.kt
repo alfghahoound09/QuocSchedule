@@ -64,7 +64,12 @@ fun TimetableScreen(
     viewModel: TimetableViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val isDark = when (state.themeMode) {
+        com.quoc.schedule.core.data.prefs.ThemeMode.LIGHT -> false
+        com.quoc.schedule.core.data.prefs.ThemeMode.DARK -> true
+        com.quoc.schedule.core.data.prefs.ThemeMode.SYSTEM -> systemDark
+    }
     val haptics = LocalHapticFeedback.current
 
     // Trạng thái drag + dialog conflict (giữ target vì drag state reset khi thả)
@@ -107,7 +112,9 @@ fun TimetableScreen(
                 onViewModeChange = { viewMode = it },
                 onPrev = { viewModel.goToWeek(-1) },
                 onNext = { viewModel.goToWeek(1) },
-                onToday = { viewModel.goToday() }
+                onToday = { viewModel.goToday() },
+                isDark = isDark,
+                onToggleTheme = { viewModel.toggleThemeMode(systemDark) }
             )
             if (state.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -200,7 +207,9 @@ fun WeekHeader(
     onViewModeChange: (String) -> Unit,
     onPrev: () -> Unit,
     onNext: () -> Unit,
-    onToday: () -> Unit
+    onToday: () -> Unit,
+    isDark: Boolean,
+    onToggleTheme: () -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("dd")
     Column(
@@ -237,12 +246,17 @@ fun WeekHeader(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            TextButton(onClick = onNext, contentPadding = PaddingValues(0.dp)) {
-                Text(
-                    "Tuần ${if (weekKnown) weekNumber + 1 else "sau"} ›",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.labelMedium
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onNext, contentPadding = PaddingValues(0.dp)) {
+                    Text(
+                        "Tuần ${if (weekKnown) weekNumber + 1 else "sau"} ›",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+                IconButton(onClick = onToggleTheme, modifier = Modifier.size(32.dp)) {
+                    Text(text = if (isDark) "☀️" else "🌙", fontSize = 16.sp)
+                }
             }
         }
         

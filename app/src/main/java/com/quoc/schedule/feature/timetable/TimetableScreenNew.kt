@@ -50,7 +50,12 @@ fun TimetableScreenNew(
     viewModel: TimetableViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val isDark = when (state.themeMode) {
+        com.quoc.schedule.core.data.prefs.ThemeMode.LIGHT -> false
+        com.quoc.schedule.core.data.prefs.ThemeMode.DARK -> true
+        com.quoc.schedule.core.data.prefs.ThemeMode.SYSTEM -> systemDark
+    }
     val haptics = LocalHapticFeedback.current
     val drag = remember { DragState() }
     var conflictDialog by remember { mutableStateOf<Triple<TimetableEntry, List<TimetableEntry>, DropTarget>?>(null) }
@@ -76,7 +81,9 @@ fun TimetableScreenNew(
                 weekKnown = state.weekNumberKnown,
                 onPrev = { viewModel.goToWeek(-1) },
                 onNext = { viewModel.goToWeek(1) },
-                onToday = { viewModel.goToday() }
+                onToday = { viewModel.goToday() },
+                isDark = isDark,
+                onToggleTheme = { viewModel.toggleThemeMode(systemDark) }
             )
             if (state.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -169,7 +176,9 @@ fun WeekHeaderNew(
     weekKnown: Boolean,
     onPrev: () -> Unit,
     onNext: () -> Unit,
-    onToday: () -> Unit
+    onToday: () -> Unit,
+    isDark: Boolean,
+    onToggleTheme: () -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     Row(
@@ -192,8 +201,13 @@ fun WeekHeaderNew(
                 Text("Tuần $weekNumber", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B7B88), fontSize = 11.sp)
             }
         }
-        TextButton(onClick = onNext) {
-            Text("Tuần ${weekNumber+1} ›", color = Color(0xFF6B7B88), fontSize = 11.sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onNext) {
+                Text("Tuần ${weekNumber+1} ›", color = Color(0xFF6B7B88), fontSize = 11.sp)
+            }
+            IconButton(onClick = onToggleTheme, modifier = Modifier.size(32.dp)) {
+                Text(text = if (isDark) "☀️" else "🌙", fontSize = 16.sp)
+            }
         }
     }
 }

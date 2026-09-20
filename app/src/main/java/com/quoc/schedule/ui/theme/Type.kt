@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.sp
 import com.quoc.schedule.R
 
 import androidx.compose.ui.text.googlefonts.GoogleFont
-import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.googlefonts.Font as GoogleFontResource
 
 val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts",
@@ -20,10 +20,33 @@ val provider = GoogleFont.Provider(
 val fontName = GoogleFont("Inter")
 
 val InterFont = FontFamily(
-    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Bold)
+    GoogleFontResource(googleFont = fontName, fontProvider = provider, weight = FontWeight.Normal),
+    GoogleFontResource(googleFont = fontName, fontProvider = provider, weight = FontWeight.Medium),
+    GoogleFontResource(googleFont = fontName, fontProvider = provider, weight = FontWeight.SemiBold),
+    GoogleFontResource(googleFont = fontName, fontProvider = provider, weight = FontWeight.Bold)
+)
+
+val BeVietnamPro = FontFamily(
+    GoogleFontResource(
+        googleFont = GoogleFont("Be Vietnam Pro"),
+        fontProvider = provider,
+        weight = FontWeight.Normal
+    ),
+    GoogleFontResource(
+        googleFont = GoogleFont("Be Vietnam Pro"),
+        fontProvider = provider,
+        weight = FontWeight.Medium
+    ),
+    GoogleFontResource(
+        googleFont = GoogleFont("Be Vietnam Pro"),
+        fontProvider = provider,
+        weight = FontWeight.SemiBold
+    ),
+    GoogleFontResource(
+        googleFont = GoogleFont("Be Vietnam Pro"),
+        fontProvider = provider,
+        weight = FontWeight.Bold
+    )
 )
 
 val QuocTypography = Typography(

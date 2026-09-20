@@ -23,7 +23,6 @@ import com.quoc.schedule.core.database.Exam
 import com.quoc.schedule.core.database.Subject
 import com.quoc.schedule.core.model.ExamType
 import com.quoc.schedule.feature.timetable.ScheduleBottomBar
-import com.quoc.schedule.feature.timetable.TopTabs
 import com.quoc.schedule.ui.theme.ExamRose
 import com.quoc.schedule.ui.theme.ExamRoseDark
 import java.time.LocalDate

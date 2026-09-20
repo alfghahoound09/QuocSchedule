@@ -25,6 +25,7 @@ data class TimetableUiState(
     val weekNumber: Int = 1,          // tự tính nếu đã đặt ngày bắt đầu học kỳ trong Settings
     val weekNumberKnown: Boolean = false,
     val entries: List<TimetableEntry> = emptyList(),
+    val themeMode: com.quoc.schedule.core.data.prefs.ThemeMode = com.quoc.schedule.core.data.prefs.ThemeMode.SYSTEM,
     val isLoading: Boolean = true
 )
 
@@ -50,7 +51,7 @@ class TimetableViewModel @Inject constructor(
             prefsRepository.prefs.collect { prefs ->
                 cachedPrefs = prefs
                 val week = prefsRepository.weekNumberFor(prefs, _uiState.value.weekStart)
-                _uiState.update { it.copy(weekNumber = week ?: it.weekNumber, weekNumberKnown = week != null) }
+                _uiState.update { it.copy(weekNumber = week ?: it.weekNumber, weekNumberKnown = week != null, themeMode = prefs.themeMode) }
                 renderWeek()
             }
         }
@@ -105,6 +106,18 @@ class TimetableViewModel @Inject constructor(
                     type = OverrideType.CANCELLED
                 )
             )
+        }
+    }
+
+    fun toggleThemeMode(isSystemDark: Boolean) {
+        val currentIsDark = when (_uiState.value.themeMode) {
+            com.quoc.schedule.core.data.prefs.ThemeMode.LIGHT -> false
+            com.quoc.schedule.core.data.prefs.ThemeMode.DARK -> true
+            com.quoc.schedule.core.data.prefs.ThemeMode.SYSTEM -> isSystemDark
+        }
+        val nextMode = if (currentIsDark) com.quoc.schedule.core.data.prefs.ThemeMode.LIGHT else com.quoc.schedule.core.data.prefs.ThemeMode.DARK
+        viewModelScope.launch {
+            prefsRepository.setThemeMode(nextMode)
         }
     }
 
