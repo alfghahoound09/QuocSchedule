@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +73,8 @@ fun TimetableScreen(
         mutableStateOf<Triple<TimetableEntry, List<TimetableEntry>, DropTarget>?>(null)
     }
 
+    var viewMode by remember { mutableStateOf("Hôm nay") }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
@@ -95,11 +99,12 @@ fun TimetableScreen(
                 .fillMaxSize()
                 .background(if (isDark) MaterialTheme.colorScheme.background else Color(0xFFFAFAF7))
         ) {
-            TopTabs(selected = 0, onSelect = { if (it == 1) onNavigateToExams() })
             WeekHeader(
                 weekStart = state.weekStart,
                 weekNumber = state.weekNumber,
                 weekKnown = state.weekNumberKnown,
+                viewMode = viewMode,
+                onViewModeChange = { viewMode = it },
                 onPrev = { viewModel.goToWeek(-1) },
                 onNext = { viewModel.goToWeek(1) },
                 onToday = { viewModel.goToday() }
@@ -109,30 +114,37 @@ fun TimetableScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                WeekGrid(
-                    entries = state.entries,
-                    weekStart = state.weekStart,
-                    isDark = isDark,
-                    drag = drag,
-                    onDropConfirm = { entry, target ->
-                        val targetDate = state.weekStart.plusDays(target.dayIdx.toLong())
-                        val conflicts = viewModel.findConflictsForMove(
-                            entry.sessionId, targetDate, target.startMinutes
-                        )
-                        if (conflicts.isEmpty()) {
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            viewModel.applyMove(entry.sessionId, targetDate, target.startMinutes)
-                        } else {
-                            // haptic "từ chối" kép
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            conflictDialog = Triple(entry, conflicts, target)
+                if (viewMode == "Hôm nay") {
+                    TimelineView(
+                        entries = state.entries,
+                        weekStart = state.weekStart,
+                        isDark = isDark
+                    )
+                } else {
+                    WeekGrid(
+                        entries = state.entries,
+                        weekStart = state.weekStart,
+                        isDark = isDark,
+                        drag = drag,
+                        onDropConfirm = { entry, target ->
+                            val targetDate = state.weekStart.plusDays(target.dayIdx.toLong())
+                            val conflicts = viewModel.findConflictsForMove(
+                                entry.sessionId, targetDate, target.startMinutes
+                            )
+                            if (conflicts.isEmpty()) {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.applyMove(entry.sessionId, targetDate, target.startMinutes)
+                            } else {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                conflictDialog = Triple(entry, conflicts, target)
+                            }
+                        },
+                        onDragCancel = {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         }
-                    },
-                    onDragCancel = {
-                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -180,92 +192,81 @@ fun TimetableScreen(
 }
 
 @Composable
-fun TopTabs(selected: Int, onSelect: (Int) -> Unit) {
-    Surface(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(999.dp),
-        color = if (androidx.compose.foundation.isSystemInDarkTheme()) {
-            MaterialTheme.colorScheme.surfaceVariant
-        } else {
-            Color(0xFFEDEAE3)
-        }
-    ) {
-        Row(Modifier.padding(4.dp)) {
-            listOf("📅 Lịch học", "📝 Lịch thi").forEachIndexed { i, label ->
-                val active = i == selected
-                Surface(
-                    modifier = Modifier.weight(1f).clickable { onSelect(i) },
-                    shape = RoundedCornerShape(999.dp),
-                    color = if (active) {
-                        if (androidx.compose.foundation.isSystemInDarkTheme()) {
-                            MaterialTheme.colorScheme.surface
-                        } else {
-                            Color.White
-                        }
-                    } else Color.Transparent
-                ) {
-                    Text(
-                        label,
-                        modifier = Modifier.padding(vertical = 9.dp),
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 13.sp),
-                        fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
-                        color = if (active) MaterialTheme.colorScheme.onSurface
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun WeekHeader(
     weekStart: LocalDate,
     weekNumber: Int,
     weekKnown: Boolean,
+    viewMode: String,
+    onViewModeChange: (String) -> Unit,
     onPrev: () -> Unit,
     onNext: () -> Unit,
     onToday: () -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("dd")
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        TextButton(onClick = onPrev, contentPadding = PaddingValues(0.dp)) {
-            Text(
-                "‹ Tuần ${if (weekKnown) (weekNumber - 1).coerceAtLeast(1) else "trước"}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelMedium
-            )
-        }
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.clickable(onClick = onToday)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                "${weekStart.format(formatter)} – ${weekStart.plusDays(6).format(formatter)} / " +
-                        "%02d / %d".format(weekStart.monthValue, weekStart.year),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                if (weekKnown) "Tuần $weekNumber · chạm để về hôm nay"
-                else "chạm để về hôm nay · đặt tuần 1 trong Cài đặt",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            TextButton(onClick = onPrev, contentPadding = PaddingValues(0.dp)) {
+                Text(
+                    "‹ Tuần ${if (weekKnown) (weekNumber - 1).coerceAtLeast(1) else "trước"}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable(onClick = onToday)
+            ) {
+                Text(
+                    "${weekStart.format(formatter)} – ${weekStart.plusDays(6).format(formatter)} / " +
+                            "%02d / %d".format(weekStart.monthValue, weekStart.year),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    if (weekKnown) "Tuần $weekNumber · chạm để về hôm nay"
+                    else "chạm để về hôm nay",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            TextButton(onClick = onNext, contentPadding = PaddingValues(0.dp)) {
+                Text(
+                    "Tuần ${if (weekKnown) weekNumber + 1 else "sau"} ›",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
         }
-        TextButton(onClick = onNext, contentPadding = PaddingValues(0.dp)) {
-            Text(
-                "Tuần ${if (weekKnown) weekNumber + 1 else "sau"} ›",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelMedium
-            )
+        
+        Spacer(Modifier.height(8.dp))
+        
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            val modes = listOf("Hôm nay", "Cả tuần")
+            modes.forEach { mode ->
+                val active = viewMode == mode
+                Surface(
+                    modifier = Modifier.weight(1f).clickable { onViewModeChange(mode) },
+                    shape = RoundedCornerShape(999.dp),
+                    color = if (active) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                ) {
+                    Text(
+                        text = mode,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
+                        color = if (active) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
@@ -499,7 +500,7 @@ private fun WeekGrid(
                 }
             }
         }
-        Spacer(Modifier.height(80.dp)) // chừa chỗ cho FAB + bottom bar
+        Spacer(Modifier.height(100.dp)) // chừa chỗ cho FAB + bottom bar
     }
 }
 
@@ -591,6 +592,128 @@ fun ClassCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TimelineView(
+    entries: List<TimetableEntry>,
+    weekStart: LocalDate,
+    isDark: Boolean
+) {
+    val scrollState = rememberScrollState()
+    val today = LocalDate.now()
+    val totalSlots = (DAY_END_MINUTES - DAY_START_MINUTES) / 60
+    val totalHeight = (SLOT_HEIGHT_DP * (totalSlots + 1)).dp
+    val density = LocalDensity.current
+
+    val dayIdx = (today.dayOfWeek.value - 1).coerceIn(0, 6)
+    val todayEntries = entries.filter { it.date == today }
+
+    Column(Modifier.fillMaxSize().verticalScroll(scrollState).padding(horizontal = 8.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(2.dp)
+                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                .padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "Thứ ${dayIdx + 2} - Hôm nay, ${today.dayOfMonth}/${today.monthValue}",
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+
+        Box(Modifier.fillMaxWidth().height(totalHeight)) {
+            val now = LocalTime.now()
+            val currentMinutes = now.hour * 60 + now.minute
+            val currentLineY = if (
+                today in weekStart..weekStart.plusDays(6) &&
+                currentMinutes in DAY_START_MINUTES..DAY_END_MINUTES
+            ) {
+                ((currentMinutes - DAY_START_MINUTES).toFloat() / 60f) * SLOT_HEIGHT_DP
+            } else 0f
+
+            // lưới nền + cột giờ
+            Row {
+                Column(Modifier.width(TIME_COLUMN_WIDTH_DP.dp)) {
+                    for (slot in 0..totalSlots) {
+                        Text(
+                            "%02d:00".format((DAY_START_MINUTES + slot * 60) / 60),
+                            modifier = Modifier.height(SLOT_HEIGHT_DP.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 9.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Column(Modifier.fillMaxWidth()) {
+                    repeat(totalSlots + 1) {
+                        Box(
+                            Modifier.height(SLOT_HEIGHT_DP.dp).fillMaxWidth()
+                                .padding(1.dp)
+                                .background(
+                                    if (isDark) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                                    else Color.White,
+                                    RoundedCornerShape(6.dp)
+                                )
+                        )
+                    }
+                }
+            }
+
+            if (currentLineY > 0f) {
+                Box(
+                    Modifier
+                        .offset(y = currentLineY.dp)
+                        .fillMaxWidth()
+                        .padding(start = TIME_COLUMN_WIDTH_DP.dp)
+                ) {
+                    Row(Modifier.fillMaxWidth()) {
+                        Spacer(Modifier.width(0.dp))
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(2.dp)
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.9f))
+                        )
+                    }
+                    Box(
+                        Modifier
+                            .size(8.dp)
+                            .background(MaterialTheme.colorScheme.error, RoundedCornerShape(50))
+                            .align(Alignment.TopCenter)
+                    )
+                }
+            }
+
+            // Timeline cards (full width)
+            Row(Modifier.fillMaxSize()) {
+                Spacer(Modifier.width(TIME_COLUMN_WIDTH_DP.dp))
+                Box(Modifier.fillMaxWidth().fillMaxHeight()) {
+                    todayEntries.forEach { entry ->
+                        val startOffset = (entry.startMinutes - DAY_START_MINUTES).coerceAtLeast(0)
+                        val duration = (entry.endMinutes - entry.startMinutes).coerceAtLeast(45)
+                        val top = (startOffset * SLOT_HEIGHT_DP / 60f).dp
+                        val cardHeight = (duration * SLOT_HEIGHT_DP / 60f).coerceAtLeast(40f).dp
+                        Box(Modifier.fillMaxWidth().offset(y = top).height(cardHeight).padding(end = 8.dp)) {
+                            ClassCard(
+                                entry = entry,
+                                height = cardHeight,
+                                isDark = isDark,
+                                draggable = false
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(100.dp))
     }
 }
 

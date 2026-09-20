@@ -24,6 +24,7 @@ import com.quoc.schedule.feature.importflow.ImportFlowScreen
 import com.quoc.schedule.feature.settings.SettingsScreen
 import com.quoc.schedule.feature.stats.StatsScreen
 import com.quoc.schedule.feature.timetable.TimetableScreen
+import com.quoc.schedule.feature.timetable.TimetableScreenNew
 import com.quoc.schedule.ui.theme.QuocScheduleTheme
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -70,7 +71,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = Routes.TIMETABLE) {
                     composable(Routes.TIMETABLE) {
-                        TimetableScreen(
+                        TimetableScreenNew(
                             onNavigateToImport = { navController.navigate(Routes.IMPORT, null) },
                             onNavigateToExams = { navController.navigate(Routes.EXAMS, null) },
                             onNavigateToStats = { navController.navigate(Routes.STATS, null) },

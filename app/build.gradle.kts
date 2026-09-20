@@ -85,3 +85,4 @@ dependencies {
     testImplementation(libs.room.testing)
     androidTestImplementation(libs.androidx.test.junit)
 }
+`n    implementation("androidx.compose.ui:ui-text-google-fonts:1.6.3")

@@ -73,7 +73,7 @@ fun SettingsScreen(
                     state.currentWeek?.let {
                         Spacer(Modifier.height(8.dp))
                         Surface(shape = RoundedCornerShape(999.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer) {
+                            color = MaterialTheme.colorScheme.primaryContainer) {
                             Text("Hiện tại là tuần $it",
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
                                 style = MaterialTheme.typography.labelSmall)

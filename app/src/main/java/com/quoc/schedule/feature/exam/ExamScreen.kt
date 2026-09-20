@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.EventNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,7 +49,6 @@ fun ExamScreen(
         }
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
-            TopTabs(selected = 1, onSelect = { if (it == 0) onNavigateToTimetable() })
 
             if (state.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -69,7 +71,7 @@ fun ExamScreen(
                             dateText = next.date.format(dateFormatter),
                             timeText = "%02d:%02d".format(next.startMinutes / 60, next.startMinutes % 60)
                         )
-                    } ?: EmptyExamHint()
+                    } ?: EmptyExamHint(onNavigateToTimetable)
                 }
 
                 // ── Upcoming exams sorted by date (soonest first) ──
@@ -158,21 +160,34 @@ fun CountdownCard(
 }
 
 @Composable
-fun EmptyExamHint() {
+fun EmptyExamHint(onNavigateToTimetable: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("🗓️", fontSize = 32.sp)
-            Spacer(Modifier.height(6.dp))
-            Text("Chưa có lịch thi nào", style = MaterialTheme.typography.titleMedium)
+        Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                Modifier.size(64.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Rounded.EventNote, contentDescription = null, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary)
+            }
+            Spacer(Modifier.height(16.dp))
+            Text("Chưa có lịch thi nào", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
             Text(
-                "Bấm + ở tab Lịch học và chọn tải lịch thi (ảnh hoặc file Word) để bắt đầu.",
+                "Bạn có thể tải lịch thi từ ảnh hoặc file Word bằng cách thêm lịch mới.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onNavigateToTimetable, shape = RoundedCornerShape(14.dp)) {
+                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Thêm lịch thi ngay")
+            }
         }
     }
 }

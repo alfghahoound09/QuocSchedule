@@ -8,28 +8,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.quoc.schedule.R
 
-// Be Vietnam Pro font family
-// TODO: Add font files to res/font/ directory:
-// - be_vietnam_pro_regular.ttf (400)
-// - be_vietnam_pro_medium.ttf (500)
-// - be_vietnam_pro_semibold.ttf (600)
-// - be_vietnam_pro_bold.ttf (700)
+import androidx.compose.ui.text.googlefonts.GoogleFont
+import androidx.compose.ui.text.googlefonts.Font
 
-// Using default font family as fallback until fonts are added
-val BeVietnamPro = FontFamily.Default
-/* Uncomment when fonts are added:
-val BeVietnamPro = FontFamily(
-    Font(R.font.be_vietnam_pro_regular, FontWeight.Normal),
-    Font(R.font.be_vietnam_pro_medium, FontWeight.Medium),
-    Font(R.font.be_vietnam_pro_semibold, FontWeight.SemiBold),
-    Font(R.font.be_vietnam_pro_bold, FontWeight.Bold)
+val provider = GoogleFont.Provider(
+    providerAuthority = "com.google.android.gms.fonts",
+    providerPackage = "com.google.android.gms",
+    certificates = R.array.com_google_android_gms_fonts_certs
 )
-*/
+
+val fontName = GoogleFont("Inter")
+
+val InterFont = FontFamily(
+    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Normal),
+    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Medium),
+    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.SemiBold),
+    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Bold)
+)
 
 val QuocTypography = Typography(
     // Display - Hero elements (countdown, screen titles)
     displayLarge = TextStyle(
-        fontFamily = BeVietnamPro,
+        fontFamily = InterFont,
         fontSize = 32.sp,
         fontWeight = FontWeight.Bold,
         lineHeight = 40.sp,

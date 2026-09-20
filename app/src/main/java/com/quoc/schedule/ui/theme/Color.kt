@@ -29,7 +29,7 @@ object LightColors {
 
 // Dark Mode
 object DarkColors {
-    val background = Color(0xFF0F172A)
+    val background = Color(0xFF0B0F19)
     val surface = Color(0xFF1E293B)
     val surfaceVariant = Color(0xFF334155)
     val border = Color(0xFF334155)
@@ -41,7 +41,7 @@ object DarkColors {
 
     val primary = Color(0xFF60A5FA)
     val primaryVariant = Color(0xFF3B82F6)
-    val onPrimary = Color(0xFF0F172A)
+    val onPrimary = Color(0xFF0B0F19)
 }
 
 // Subject Pastel Palette (7 colors) - Light bg / Dark accent
@@ -55,10 +55,10 @@ val ColorPeach = Color(0xFFFFEDD5)
 val BeigeAccent = Color(0xFFF5E6D3)
 
 val SubjectPalette = listOf(
-    SubjectColorPair(Color(0xFFE8F8F0), Color(0xFF10B981)), // mint
-    SubjectColorPair(Color(0xFFEAF4FD), Color(0xFF3B82F6)), // sky
-    SubjectColorPair(Color(0xFFF3EDFD), Color(0xFF8B5CF6)), // lavender
-    SubjectColorPair(Color(0xFFFEF0EA), Color(0xFFF97316)), // peach
+    SubjectColorPair(Color(0xFFEAF4FD), Color(0xFF38BDF8)), // Toán / Giải tích
+    SubjectColorPair(Color(0xFFF3EDFD), Color(0xFFA855F7)), // Lập trình / CTDL
+    SubjectColorPair(Color(0xFFFEF0EA), Color(0xFFFB923C)), // Lý luận / Chính trị
+    SubjectColorPair(Color(0xFFE8F8F0), Color(0xFF34D399)), // Xác suất thống kê
     SubjectColorPair(Color(0xFFFEF9E6), Color(0xFFF59E0B)), // lemon
     SubjectColorPair(Color(0xFFFEE7F0), Color(0xFFEC4899)), // rose
     SubjectColorPair(Color(0xFFFFF1ED), Color(0xFFEF4444))  // coral
