@@ -170,4 +170,34 @@ class TimetableViewModel @Inject constructor(
             }
         }
     }
+
+    // ── Chỉnh sửa thủ công ──
+    fun updateEntry(sessionId: Long, newName: String, newRoom: String, newDay: Int, newStart: Int, newEnd: Int) {
+        viewModelScope.launch {
+            val session = cachedSessions.find { it.id == sessionId } ?: return@launch
+            val subject = cachedSubjects[session.subjectId]
+            
+            // Cập nhật subject name
+            if (subject != null && subject.name != newName) {
+                repository.addSubject(subject.copy(name = newName))
+            }
+
+            // Cập nhật session details
+            repository.updateSession(
+                session.copy(
+                    room = newRoom,
+                    dayOfWeek = newDay,
+                    startMinutes = newStart,
+                    endMinutes = newEnd
+                )
+            )
+        }
+    }
+
+    fun deleteEntry(sessionId: Long) {
+        viewModelScope.launch {
+            val session = cachedSessions.find { it.id == sessionId } ?: return@launch
+            repository.deleteSession(session)
+        }
+    }
 }

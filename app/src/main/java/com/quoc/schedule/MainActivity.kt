@@ -69,27 +69,36 @@ class MainActivity : ComponentActivity() {
                 }
             ) {
                 val navController = rememberNavController()
+
+                val navigateToTopLevel: (String) -> Unit = { route ->
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+
                 NavHost(navController = navController, startDestination = Routes.TIMETABLE) {
                     composable(Routes.TIMETABLE) {
                         TimetableScreenNew(
-                            onNavigateToImport = { navController.navigate(Routes.IMPORT, null) },
-                            onNavigateToExams = { navController.navigate(Routes.EXAMS, null) },
-                            onNavigateToStats = { navController.navigate(Routes.STATS, null) },
-                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS, null) }
+                            onNavigateToImport = { navController.navigate(Routes.IMPORT) },
+                            onNavigateToExams = { navigateToTopLevel(Routes.EXAMS) },
+                            onNavigateToStats = { navigateToTopLevel(Routes.STATS) },
+                            onNavigateToSettings = { navigateToTopLevel(Routes.SETTINGS) }
                         )
                     }
                     composable(Routes.EXAMS) {
                         ExamScreen(
-                            onNavigateToTimetable = { navController.popBackStack() },
-                            onNavigateToStats = { navController.navigate(Routes.STATS, null) },
-                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS, null) }
+                            onNavigateToTimetable = { navigateToTopLevel(Routes.TIMETABLE) },
+                            onNavigateToStats = { navigateToTopLevel(Routes.STATS) },
+                            onNavigateToSettings = { navigateToTopLevel(Routes.SETTINGS) }
                         )
                     }
                     composable(Routes.STATS) {
                         StatsScreen(
-                            onNavigateToTimetable = { navController.popBackStack() },
-                            onNavigateToExams = { navController.navigate(Routes.EXAMS, null) },
-                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS, null) }
+                            onNavigateToTimetable = { navigateToTopLevel(Routes.TIMETABLE) },
+                            onNavigateToExams = { navigateToTopLevel(Routes.EXAMS) },
+                            onNavigateToSettings = { navigateToTopLevel(Routes.SETTINGS) }
                         )
                     }
                     composable(Routes.SETTINGS) {

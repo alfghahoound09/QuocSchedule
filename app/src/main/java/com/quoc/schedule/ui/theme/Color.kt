@@ -44,8 +44,12 @@ object DarkColors {
     val onPrimary = Color(0xFF0B0F19)
 }
 
-// Subject Pastel Palette (7 colors) - Light bg / Dark accent
-data class SubjectColorPair(val lightBg: Color, val darkAccent: Color)
+// Subject Pastel Palette (7 colors) - Light bg / Dark bg / Accent
+data class SubjectColorPair(
+    val lightBg: Color,
+    val darkBg: Color,
+    val darkAccent: Color
+)
 
 val ExamRose = Color(0xFFFFD4D4)
 val ExamRoseDark = Color(0xFFEC4899)
@@ -55,13 +59,13 @@ val ColorPeach = Color(0xFFFFEDD5)
 val BeigeAccent = Color(0xFFF5E6D3)
 
 val SubjectPalette = listOf(
-    SubjectColorPair(Color(0xFFEAF4FD), Color(0xFF38BDF8)), // Toán / Giải tích
-    SubjectColorPair(Color(0xFFF3EDFD), Color(0xFFA855F7)), // Lập trình / CTDL
-    SubjectColorPair(Color(0xFFFEF0EA), Color(0xFFFB923C)), // Lý luận / Chính trị
-    SubjectColorPair(Color(0xFFE8F8F0), Color(0xFF34D399)), // Xác suất thống kê
-    SubjectColorPair(Color(0xFFFEF9E6), Color(0xFFF59E0B)), // lemon
-    SubjectColorPair(Color(0xFFFEE7F0), Color(0xFFEC4899)), // rose
-    SubjectColorPair(Color(0xFFFFF1ED), Color(0xFFEF4444))  // coral
+    SubjectColorPair(Color(0xFFEAF4FD), Color(0xFF1A3148), Color(0xFF38BDF8)), // Toán / Giải tích
+    SubjectColorPair(Color(0xFFF3EDFD), Color(0xFF2D1F4E), Color(0xFFA855F7)), // Lập trình / CTDL
+    SubjectColorPair(Color(0xFFFEF0EA), Color(0xFF3D2815), Color(0xFFFB923C)), // Lý luận / Chính trị
+    SubjectColorPair(Color(0xFFE8F8F0), Color(0xFF153D2B), Color(0xFF34D399)), // Xác suất thống kê
+    SubjectColorPair(Color(0xFFFEF9E6), Color(0xFF3D3415), Color(0xFFF59E0B)), // lemon
+    SubjectColorPair(Color(0xFFFEE7F0), Color(0xFF3D1530), Color(0xFFEC4899)), // rose
+    SubjectColorPair(Color(0xFFFFF1ED), Color(0xFF3D1515), Color(0xFFEF4444))  // coral
 )
 
 // Semantic Colors
@@ -167,8 +171,8 @@ fun getSubjectColor(subjectCode: String, isDarkTheme: Boolean = false): Pair<Col
     val index = subjectCode.hashCode().absoluteValue % SubjectPalette.size
     val pair = SubjectPalette[index]
     return if (isDarkTheme) {
-        // Dark mode: dimmed background, brighter accent
-        Pair(pair.lightBg.copy(alpha = 0.15f), pair.darkAccent)
+        // Dark mode: rich tinted dark background, bright accent
+        Pair(pair.darkBg, pair.darkAccent)
     } else {
         // Light mode: pastel background, darker accent
         Pair(pair.lightBg, pair.darkAccent)
@@ -179,5 +183,5 @@ fun getSubjectColor(subjectCode: String, isDarkTheme: Boolean = false): Pair<Col
 @Deprecated("Use getSubjectColor(subjectCode) instead")
 fun subjectCardColor(colorKey: Int, darkTheme: Boolean): Color {
     val pair = SubjectPalette[colorKey % SubjectPalette.size]
-    return if (darkTheme) pair.lightBg.copy(alpha = 0.28f) else pair.lightBg
+    return if (darkTheme) pair.darkBg else pair.lightBg
 }

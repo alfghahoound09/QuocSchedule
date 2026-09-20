@@ -44,7 +44,7 @@ fun ExamScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            ScheduleBottomBar(selected = 1, onExams = {}, onStats = onNavigateToStats, onSettings = onNavigateToSettings)
+            ScheduleBottomBar(selected = 1, onTimetable = onNavigateToTimetable, onExams = {}, onStats = onNavigateToStats, onSettings = onNavigateToSettings)
         }
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {

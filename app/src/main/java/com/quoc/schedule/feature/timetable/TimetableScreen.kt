@@ -434,12 +434,34 @@ private fun WeekGrid(
                         it.date.dayOfWeek.value == dayIdx + 1 && it.sessionId != drag.entry?.sessionId
                     }
                     Box(Modifier.width(DAY_COLUMN_WIDTH_DP.dp).fillMaxHeight()) {
-                        dayEntries.forEach { entry ->
-                            val startOffset = (entry.startMinutes - DAY_START_MINUTES).coerceAtLeast(0)
-                            val duration = (entry.endMinutes - entry.startMinutes).coerceAtLeast(45)
-                            val top = (startOffset * SLOT_HEIGHT_DP / 60f).dp
-                            val cardHeight = (duration * SLOT_HEIGHT_DP / 60f).coerceAtLeast(40f).dp
-                            Box(Modifier.fillMaxWidth().offset(y = top).height(cardHeight)) {
+                        val overlaps = mutableListOf<MutableList<TimetableEntry>>()
+                        dayEntries.sortedBy { it.startMinutes }.forEach { entry ->
+                            val overlappingGroup = overlaps.firstOrNull { group ->
+                                group.any { maxOf(it.startMinutes, entry.startMinutes) < minOf(it.endMinutes, entry.endMinutes) }
+                            }
+                            if (overlappingGroup != null) {
+                                overlappingGroup.add(entry)
+                            } else {
+                                overlaps.add(mutableListOf(entry))
+                            }
+                        }
+
+                        overlaps.forEach { group ->
+                            val cols = group.size
+                            group.forEachIndexed { index, entry ->
+                                val startOffset = (entry.startMinutes - DAY_START_MINUTES).coerceAtLeast(0)
+                                val duration = (entry.endMinutes - entry.startMinutes).coerceAtLeast(45)
+                                val top = (startOffset * SLOT_HEIGHT_DP / 60f).dp
+                                val cardHeight = (duration * SLOT_HEIGHT_DP / 60f).coerceAtLeast(40f).dp
+                                Box(
+                                    Modifier
+                                        .fillMaxWidth(1f / cols)
+                                        .offset(
+                                            x = (DAY_COLUMN_WIDTH_DP / cols * index).dp,
+                                            y = top
+                                        )
+                                        .height(cardHeight)
+                                ) {
                                 ClassCard(
                                     entry = entry,
                                     height = cardHeight,
@@ -516,6 +538,7 @@ private fun WeekGrid(
         }
         Spacer(Modifier.height(100.dp)) // chừa chỗ cho FAB + bottom bar
     }
+}
 }
 
 @Composable
@@ -709,19 +732,44 @@ private fun TimelineView(
             // Timeline cards (full width)
             Row(Modifier.fillMaxSize()) {
                 Spacer(Modifier.width(TIME_COLUMN_WIDTH_DP.dp))
-                Box(Modifier.fillMaxWidth().fillMaxHeight()) {
-                    todayEntries.forEach { entry ->
-                        val startOffset = (entry.startMinutes - DAY_START_MINUTES).coerceAtLeast(0)
-                        val duration = (entry.endMinutes - entry.startMinutes).coerceAtLeast(45)
-                        val top = (startOffset * SLOT_HEIGHT_DP / 60f).dp
-                        val cardHeight = (duration * SLOT_HEIGHT_DP / 60f).coerceAtLeast(40f).dp
-                        Box(Modifier.fillMaxWidth().offset(y = top).height(cardHeight).padding(end = 8.dp)) {
-                            ClassCard(
-                                entry = entry,
-                                height = cardHeight,
-                                isDark = isDark,
-                                draggable = false
-                            )
+                BoxWithConstraints(Modifier.fillMaxWidth().fillMaxHeight()) {
+                    val maxWidthDp = maxWidth
+                    val overlaps = mutableListOf<MutableList<TimetableEntry>>()
+                    todayEntries.sortedBy { it.startMinutes }.forEach { entry ->
+                        val overlappingGroup = overlaps.firstOrNull { group ->
+                            group.any { maxOf(it.startMinutes, entry.startMinutes) < minOf(it.endMinutes, entry.endMinutes) }
+                        }
+                        if (overlappingGroup != null) {
+                            overlappingGroup.add(entry)
+                        } else {
+                            overlaps.add(mutableListOf(entry))
+                        }
+                    }
+
+                    overlaps.forEach { group ->
+                        val cols = group.size
+                        group.forEachIndexed { index, entry ->
+                            val startOffset = (entry.startMinutes - DAY_START_MINUTES).coerceAtLeast(0)
+                            val duration = (entry.endMinutes - entry.startMinutes).coerceAtLeast(45)
+                            val top = (startOffset * SLOT_HEIGHT_DP / 60f).dp
+                            val cardHeight = (duration * SLOT_HEIGHT_DP / 60f).coerceAtLeast(40f).dp
+                            val cardWidth = maxWidthDp / cols
+                            val xOffset = cardWidth * index
+
+                            Box(
+                                Modifier
+                                    .offset(x = xOffset, y = top)
+                                    .width(cardWidth)
+                                    .height(cardHeight)
+                                    .padding(end = 4.dp, bottom = 2.dp)
+                            ) {
+                                ClassCard(
+                                    entry = entry,
+                                    height = cardHeight,
+                                    isDark = isDark,
+                                    draggable = false
+                                )
+                            }
                         }
                     }
                 }
@@ -734,13 +782,14 @@ private fun TimelineView(
 @Composable
 fun ScheduleBottomBar(
     selected: Int,
-    onExams: () -> Unit,
-    onStats: () -> Unit,
-    onSettings: () -> Unit
+    onTimetable: () -> Unit = {},
+    onExams: () -> Unit = {},
+    onStats: () -> Unit = {},
+    onSettings: () -> Unit = {}
 ) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         NavigationBarItem(
-            selected = selected == 0, onClick = {},
+            selected = selected == 0, onClick = onTimetable,
             icon = { Icon(Icons.Default.CalendarMonth, null) }, label = { Text("Lịch") }
         )
         NavigationBarItem(

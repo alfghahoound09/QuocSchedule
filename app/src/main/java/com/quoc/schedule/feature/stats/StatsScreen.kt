@@ -48,6 +48,7 @@ fun StatsScreen(
         bottomBar = {
             ScheduleBottomBar(
                 selected = 2,
+                onTimetable = onNavigateToTimetable,
                 onExams = onNavigateToExams,
                 onStats = {},
                 onSettings = onNavigateToSettings

@@ -107,7 +107,7 @@ class ScheduleNormalizer @Inject constructor() {
 
     /**
      * Map một hàng bảng → có thể ra NHIỀU entry nếu đa ngày / đa tiết.
-     * vd: T2,T4,T5 + "4 - 6,10 - 12,7 - 9" → 3 buổi học riêng.
+     * vd: T2,T4,T5 + "4 - 6,10 - 12,7 - 9" + "405-B508-B408-B" → 3 buổi học riêng.
      */
     private fun mapRow(row: List<String>, cols: Map<String, Int>): List<ParsedEntry>? {
         if (cols.isEmpty()) return null
@@ -120,7 +120,8 @@ class ScheduleNormalizer @Inject constructor() {
         val name = col("name")
         if (name == null) confidence -= 0.3f
         val code = col("code") ?: row.joinToString(" ").let { extractCode(it) }
-        val room = col("room")
+        val roomRaw = col("room")
+        val rooms = parseRoomList(roomRaw ?: "")
         val lecturer = col("lecturer")
         val candidate = col("candidate")
         val date = col("date")?.let { parseDate(it) }
@@ -143,8 +144,8 @@ class ScheduleNormalizer @Inject constructor() {
             warnings += "Chưa rõ giờ bắt đầu"
         }
 
-        // Tạo entry cho mỗi (ngày × khung giờ)
-        // Quy ước pairing: "T2,T4,T5" + "4 - 6,10 - 12,7 - 9" → T2↔(4-6), T4↔(10-12), T5↔(7-9)
+        // Tạo entry cho mỗi (ngày × khung giờ × phòng)
+        // Quy ước pairing: "T2,T4,T5" + "4 - 6,10 - 12,7 - 9" + "405-B,508-B,408-B" → T2↔(4-6)↔405-B, ...
         val result = mutableListOf<ParsedEntry>()
         val pairs: List<Pair<Int?, Pair<String?, String?>>> = when {
             days.size == timeRanges.size && days.isNotEmpty() ->
@@ -157,7 +158,15 @@ class ScheduleNormalizer @Inject constructor() {
                 days.flatMap { d -> timeRanges.map { d to it } }  // fallback cross product
         }
 
-        for ((day, range) in pairs) {
+        for ((idx, pair) in pairs.withIndex()) {
+            val (day, range) = pair
+            // Pair room by index: nếu rooms.size == pairs.size thì 1:1, ngược lại dùng room gốc
+            val entryRoom = when {
+                rooms.size == pairs.size -> rooms[idx]
+                rooms.size == 1 -> rooms[0]
+                rooms.isNotEmpty() -> rooms.getOrElse(idx) { rooms.last() }
+                else -> roomRaw
+            }
             result += ParsedEntry(
                 subjectName = name ?: "",
                 subjectCode = code,
@@ -166,7 +175,7 @@ class ScheduleNormalizer @Inject constructor() {
                 date = date,
                 startTime = range.first,
                 endTime = range.second,
-                room = room,
+                room = entryRoom,
                 candidateId = candidate,
                 kind = if (isExam) EntryKind.EXAM else EntryKind.CLASS,
                 confidence = confidence.coerceIn(0.1f, 1f),
@@ -396,5 +405,44 @@ class ScheduleNormalizer @Inject constructor() {
         // "Học Online"
         if (text.contains("online", ignoreCase = true)) return "Online"
         return null
+    }
+
+    /**
+     * Parse chuỗi phòng học dạng "405-B508-B408-B" / "405-B, 508-B, 408-B" / "308-B"
+     * thành danh sách các phòng riêng biệt.
+     *
+     * Chiến lược:
+     * 1. Nếu có dấu phẩy/xuống dòng → split theo delimiter
+     * 2. Nếu không → dùng regex tìm tất cả room patterns trong chuỗi nối liền
+     */
+    fun parseRoomList(text: String): List<String> {
+        if (text.isBlank()) return emptyList()
+
+        // Strategy 1: split by comma, newline, semicolon
+        val delimited = text.split(",", ";", "\n", "，").map { it.trim() }.filter { it.isNotBlank() }
+        if (delimited.size > 1) {
+            // Each part might need cleanup - parse room from each part
+            return delimited.mapNotNull { part -> parseRoom(part) ?: part.trim().takeIf { it.isNotBlank() } }
+        }
+
+        // Strategy 2: regex findAll for concatenated rooms like "405-B508-B408-B"
+        val roomPatterns = listOf(
+            Regex("""[A-Z]{1,2}\d?-\d{3,4}[A-Z]?"""),  // B1-203, TC-305
+            Regex("""\d{2,4}-[A-Z](?![a-zA-Z])"""),      // 308-B, 405-B
+            Regex("""[Pp]\.?\s?\d{3,4}[A-Z]?"""),        // P.305
+            Regex("""\d{3,4}[A-Z]""")                     // 305A
+        )
+        for (pattern in roomPatterns) {
+            val matches = pattern.findAll(text).map { it.value.trim() }.toList()
+            if (matches.size > 1) return matches
+            if (matches.size == 1) {
+                // If it's a single match, but the text is longer, we might have mixed formats, but for now return it.
+                return matches
+            }
+        }
+
+        // Fallback: check for "Online"
+        if (text.contains("online", ignoreCase = true)) return listOf("Online")
+        return listOf(text.trim())
     }
 }

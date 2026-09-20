@@ -41,6 +41,7 @@ class ScheduleRepository @Inject constructor(
     suspend fun updateSession(session: ClassSession) = sessionDao.update(session)
     suspend fun getSession(id: Long): ClassSession? =
         sessionDao.observeAll().first().find { it.id == id }
+    suspend fun deleteSession(session: ClassSession) = sessionDao.delete(session)
     suspend fun addExam(exam: Exam): Long = examDao.upsert(exam)
     suspend fun deleteExam(exam: Exam) = examDao.delete(exam)
     suspend fun deleteSubject(subject: Subject) = subjectDao.delete(subject)
